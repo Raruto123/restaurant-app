@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-import('dotenv/config');
+import mongoose from 'mongoose';
+import dotenv from "dotenv/config";
 
 
 const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
