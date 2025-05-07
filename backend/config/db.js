@@ -6,10 +6,13 @@ const clientOptions = { serverApi: { version: '1', strict: true, deprecationErro
 
 async function runDatabase() {
     try {
-        await mongoose.connect(process.env.MONGO_DB_URI, clientOptions);
-    } catch (error) {
-        console.error("Erreur de la connexion:", error);
+        await mongoose.connect(process.env.MONGO_DB_URI, clientOptions).then(function () {
+            console.log("Succès de la connexion à MONGO DB")
+        });
+    } 
+    catch (error) {
+        console.error("Erreur de la connexion:", error.errorResponse.errmsg);
     }
 }
 
-module.exports = runDatabase;
+export default runDatabase;
