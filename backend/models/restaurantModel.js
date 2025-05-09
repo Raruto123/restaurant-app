@@ -24,7 +24,7 @@ restaurantSchema.pre('save', async function(next) {
 })
 
 // Vérification du mot de passe
-restaurantSchema.methods.comparePassword = function (plain) {
+restaurantSchema.methods.comparePassword = async function (plain) {
     return bcrypt.compare(plain, this.password)
 }
 
