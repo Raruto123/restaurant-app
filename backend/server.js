@@ -2,9 +2,11 @@ import express from "express";
 import cors from "cors";
 // charger les variables d'environnement
 import dotenv from "dotenv/config";
+import cookieParser from "cookie-parser";
 import runDatabase from "./config/db.js";
 import restaurantRoutes from "./routes/restaurantRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import { checkUser } from "./middlewares/authMiddleware.js";
 
 const app = express();
 const port = process.env.PORT
@@ -18,7 +20,12 @@ app.use(cors(
         credentials : true
     }
 ));
-app.use(express.json());
+app.use(express.json());//pour lire req.body
+app.use(express.urlencoded({extended : true}))
+app.use(cookieParser());//pour lire req.cookies
+//jwt
+app.use(checkUser);
+// app.use(requireAuth);
 
 //routes
 app.use("/api/restaurant", restaurantRoutes);

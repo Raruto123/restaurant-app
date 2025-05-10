@@ -1,6 +1,7 @@
 import { Router } from "express";
 const router = Router();
 import { createOrder, createRestaurant, getAllRestaurants, login } from "../controllers/restaurantControllers.js";
+import { checkUser } from "../middlewares/authMiddleware.js";
 
 //créer restaurant (seul moi peut le faire)
 router.post('/create-restaurant', createRestaurant)
@@ -11,8 +12,8 @@ router.get('/get-all-restaurants', getAllRestaurants)
 router.post("/login", login);
 
 
-// //creer une commande
-router.post("/create-order", createOrder);
+//creer une commande requiert d'être connecté
+router.post("/create-order", checkUser, createOrder);
 // //voir la liste des commandes dans le dashboard
 // router.get("/dashboard-orders", () => {
 //     console.log("lel4")

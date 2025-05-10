@@ -1,5 +1,7 @@
 import orderModel from "../models/orderModel.js";
 import restaurantModel from "../models/restaurantModel.js";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv/config";
 
 //créer un restaurant
 export async function createRestaurant(req, res) {
@@ -32,8 +34,22 @@ export async function login(req, res) {
     const validateUser = await restaurantUser.comparePassword(password);
     if (!validateUser) throw new Error("Mot de passe incorrect");
 
-    res.status(200).json({ email: restaurantUser._id });
-    res.send("Connexion réussie! bienvenue dans votre restaurant");
+    //Attribuer un token à la connexion
+    const token = jwt.sign(
+      { id: restaurantUser._id },
+      process.env.TOKEN_SECRET,
+      { expiresIn: "3d" }
+    );
+    //Stocker le cookie
+    res
+      .cookie("jwtoken", token, {
+        httpOnly: true,
+        maxAge: 3 * 24 * 60 * 60 * 1000,
+        sameSite: "none",
+        secure: true,
+      })
+      .status(200)
+      .json({ message: "Connecté", id: restaurantUser._id });
   } catch (err) {
     console.log("Password entered :", password);
     console.error("une erreur est surevenue lors de la connexion", err);
@@ -42,19 +58,29 @@ export async function login(req, res) {
 }
 
 export async function createOrder(req, res) {
+    // console.log('🏷️ res.locals.restaurant =', req.restaurant);
+    console.log('🏷️ req.restaurant =', req.restaurant);
+
   try {
-    const { items, total, restaurantId, table } = req.body;
+    const { items, table } = req.body;
+
+    //On calcule le total
+    const total = items.reduce((sum, { price, qty }) => sum + price * qty, 0);
+    //on prend l'id du restaurant depuis ce qu'on a stocké
+    const restaurantId = req.restaurant._id;
+    // const restaurantId = res.locals.restaurant._id;
+
     const newOrder = new orderModel({
       items: items,
       totalAmount: total,
       restaurant: restaurantId,
       tableNumber: table,
-      qrCodeId: Date.now(),
+      qrCodeId: Date.now().toString(),
     });
     await newOrder.save();
-    res.status(200).json(newOrder);
+    res.status(201).json(newOrder);
   } catch (err) {
-    console.log("veuillez inscrire correctement les données");
+    console.error("Erreur createOrder :", err);
     res.status(400).json({ error: err.message });
   }
 }
