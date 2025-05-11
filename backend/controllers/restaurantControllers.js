@@ -2,6 +2,9 @@ import orderModel from "../models/orderModel.js";
 import restaurantModel from "../models/restaurantModel.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv/config";
+import Cinetpay from "cinetpay-node-sdk";
+
+const cinetpay = new Cinetpay(process.env.CINETPAY_API_KEY, process.env.CINETPAY_SITE_ID)
 
 //créer un restaurant
 export async function createRestaurant(req, res) {
@@ -82,5 +85,23 @@ export async function createOrder(req, res) {
   } catch (err) {
     console.error("Erreur createOrder :", err);
     res.status(400).json({ error: err.message });
+  }
+}
+
+
+export async function seeDashboardOrders(req, res) {
+  const dashboardOrders = await orderModel.find();
+  res.status(200).json(dashboardOrders);  
+}
+
+export async function payOrder(req, res) {
+  const orderId = req.params;
+  const cpTransactionId = req.body;
+  const results = cinetpay.checkTransaction(cpTransactionId);
+  if(results.data === "ACCEPTED") {
+    await orderModel.findByIdAndUpdate(orderId, {status: "paid"});
+    return res.json({message: "Paiement validé"});
+  } else {
+      res.status(400).json({error: "Paiement échoué"});
   }
 }
