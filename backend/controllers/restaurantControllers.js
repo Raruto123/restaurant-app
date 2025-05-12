@@ -4,7 +4,10 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv/config";
 import Cinetpay from "cinetpay-node-sdk";
 
-const cinetpay = new Cinetpay(process.env.CINETPAY_API_KEY, process.env.CINETPAY_SITE_ID)
+const cinetpay = new Cinetpay(
+  process.env.CINETPAY_API_KEY,
+  process.env.CINETPAY_SITE_ID
+);
 
 //créer un restaurant
 export async function createRestaurant(req, res) {
@@ -61,8 +64,8 @@ export async function login(req, res) {
 }
 
 export async function createOrder(req, res) {
-    // console.log('🏷️ res.locals.restaurant =', req.restaurant);
-    console.log('🏷️ req.restaurant =', req.restaurant);
+  // console.log('🏷️ res.locals.restaurant =', req.restaurant);
+  console.log("🏷️ req.restaurant =", req.restaurant);
 
   try {
     const { items, table } = req.body;
@@ -81,27 +84,115 @@ export async function createOrder(req, res) {
       qrCodeId: Date.now().toString(),
     });
     await newOrder.save();
-    res.status(201).json(newOrder);
+    //Attribuer un token à la connexion
+    const tokenOrder = jwt.sign(
+      { id: newOrder._id },
+      process.env.TOKEN_SECRET,
+      { expiresIn: "3d" }
+    );
+    //Stocker le cookie
+    res
+      .cookie("jwtokenOrder", tokenOrder, {
+        httpOnly: true,
+        maxAge: 3 * 24 * 60 * 60 * 1000,
+        sameSite: "none",
+        secure: true,
+      })
+      .status(200)
+      .json({ message: "Token appliqué à cette commande", id: newOrder._id });
   } catch (err) {
     console.error("Erreur createOrder :", err);
     res.status(400).json({ error: err.message });
   }
 }
 
-
 export async function seeDashboardOrders(req, res) {
   const dashboardOrders = await orderModel.find();
-  res.status(200).json(dashboardOrders);  
+  res.status(200).json(dashboardOrders);
 }
 
+// export async function payOrder(req, res) {
+//   const paymentData = {
+//     transaction_id: req.order._id,
+//     amount: req.order.totalAmount,
+//     currency: "XOF",
+//     description: req.order.items,
+//     notify_url: "https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672",
+//     return_url: "https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672",
+//     channels: "MOBILE_MONEY", // ou 'CREDIT_CARD', 'MOBILE_MONEY', 'WALLET'
+//   };
+//   cinetpay
+//     .initiatePayment(paymentData)
+//     .then((response) => {
+//       console.log("l'URL de paiement :", response.data.payment_url);
+//     })
+//     .catch((error) => {
+//       console.log(
+//         "Erreur lors de l'initialisation du paiement :",
+//         error.message
+//       );
+//     });
+//   const results = cinetpay.checkTransaction(paymentData.transaction_id);
+//   console.log(results);
+//   // if (results.data.status === "ACCEPTED") {
+//   //   await orderModel.findByIdAndUpdate(req.order._id, { status: "paid" });
+//   //   return res.json({ message: "Paiement validé" });
+//   // } else {
+//   //   res.status(400).json({ error: "Paiement échoué" });
+//   // }
+// }
+
+/**
+ * POST /orders/:id/pay
+ * Initialise le paiement pour l'ordre d'id = req.params.id
+ */
 export async function payOrder(req, res) {
-  const orderId = req.params;
-  const cpTransactionId = req.body;
-  const results = cinetpay.checkTransaction(cpTransactionId);
-  if(results.data === "ACCEPTED") {
-    await orderModel.findByIdAndUpdate(orderId, {status: "paid"});
-    return res.json({message: "Paiement validé"});
-  } else {
-      res.status(400).json({error: "Paiement échoué"});
+  try {
+    // 2. Récupérer l'ordre
+    const order = await orderModel.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // 3. Construire le PaymentData
+    /** @type {import('cinetpay-node-sdk').PaymentData} */
+    const paymentData = {
+      transaction_id: order.qrCodeId, // identifiant unique de la transaction
+      amount: order.totalAmount, // montant total de la commande
+      currency: "XOF", // ou selon votre zone
+      description: `Payment for order ${order._id}`,
+      notify_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
+      return_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
+      channels: "ALL", // ou MOBILE_MONEY, WALLET, ...
+    };
+
+    // 4. Appeler CinetPay
+    const response = await cinetpay.initiatePayment(paymentData);
+    const results = await cinetpay.checkTransaction(paymentData.transaction_id);
+    console.log(results.code);
+
+    if (response.code === "201") {
+      // code 201 = succès
+      return res.status(400).json({
+        success_code : response.code,
+        message: response.message,
+        description: response.description,
+        payment_url: response.data.payment_url,
+        payment_token: response.data.payment_token,
+      });
+    }else {
+      // 5. Retourner l'URL de paiement au client
+      return res.status(200).json({
+        error_code : response.code,
+        error : response.message,
+        description : response.description
+      });
+    }
+
+    //Vérifier l'état de la transaction
+
+  } catch (err) {
+    console.error("Error in payOrder:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }

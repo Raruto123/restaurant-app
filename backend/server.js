@@ -25,6 +25,7 @@ app.use(express.urlencoded({extended : true}))
 app.use(cookieParser());//pour lire req.cookies
 //jwt
 app.use(checkUser);
+// app.use(checkOrder);
 // app.use(requireAuth);
 
 //routes

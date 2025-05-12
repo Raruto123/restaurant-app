@@ -1,7 +1,7 @@
 import { Router } from "express";
 const router = Router();
 import { createOrder, createRestaurant, getAllRestaurants, login, payOrder, seeDashboardOrders } from "../controllers/restaurantControllers.js";
-import { checkUser } from "../middlewares/authMiddleware.js";
+import { checkOrder, checkUser } from "../middlewares/authMiddleware.js";
 
 //créer restaurant (seul moi peut le faire)
 router.post('/create-restaurant', createRestaurant)
@@ -20,6 +20,7 @@ router.get("/dashboard-orders", seeDashboardOrders);
 
 // marquer une commande comme payée/le client qui paye
 router.patch("/:id/pay", payOrder);
+// router.post("/pay", checkOrder, payOrder)
 
 //générer ou récupérer un code qr
 // router.get("/:id/qr", getCodeQr)
