@@ -168,31 +168,93 @@ export async function payOrder(req, res) {
 
     // 4. Appeler CinetPay
     const response = await cinetpay.initiatePayment(paymentData);
-    const results = await cinetpay.checkTransaction(paymentData.transaction_id);
-    console.log(results.code);
+    // const results = await cinetpay.checkTransaction(paymentData.transaction_id);
+    //console.log(results.data.status);
 
     if (response.code === "201") {
       // code 201 = succès
       return res.status(400).json({
-        success_code : response.code,
+        success_code: response.code,
         message: response.message,
         description: response.description,
         payment_url: response.data.payment_url,
         payment_token: response.data.payment_token,
       });
-    }else {
-      // 5. Retourner l'URL de paiement au client
+    } else {
       return res.status(200).json({
-        error_code : response.code,
-        error : response.message,
-        description : response.description
+        error_code: response.code,
+        error: response.message,
+        description: response.description,
       });
     }
-
-    //Vérifier l'état de la transaction
-
   } catch (err) {
     console.error("Error in payOrder:", err);
     return res.status(500).json({ error: "Internal Server Error" });
   }
+}
+
+export async function notifyPayment(req, res) {
+  try {
+        // 1) Récupérer le token et les données envoyées
+    const data = req.body;
+    const token = req.get("x-token");
+    const secretKey = process.env.CINETPAY_SECRET_KEY;
+    // 2) Vérifier le token HMAC via la méthode fournie
+
+    const isValid = await Cinetpay.verifyHMACToken(token, secretKey, data);
+
+    if (!isValid) {
+      return res.status(401).send("Invalid HMAC token");
+    }
+
+    const order = await orderModel.findOne({ qrCodeId: data.cpm_trans_id });
+    if (!order) {
+      return res.status(404).send("Order not found");
+    }
+    // 3) Mettre à jour la commande correspondante
+
+    order.status = "paid";
+    await order.save();
+    // 4) Répondre à CinetPay
+
+    res.status(200).send("OK");
+  } catch (err) {
+    console.error("notifyPayment error:", err);
+    res.status(500).send("Internal Server Error");
+  }
+}
+
+export async function checkOrderStatus(req, res) {
+
+  try {
+        const order = await orderModel.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // 1) Appel à checkTransaction pour obtenir le statut
+    const result = await cinetpay.checkTransaction(order.qrCodeId);
+
+    if (result.data.status === "ACCEPTED") {
+      // 2) Mettre à jour la commande si nécessaire
+      if (order.status !== "paid") {
+        order.status = "paid";
+        await order.save();
+      }
+    } else {
+      console.log(result.data.status)
+    }
+
+    // 3) Retourner le statut actuel
+    return res.status(200).json({
+      orderId: order._id,
+      status: order.status,
+      payment_method: result.data.payment_method,
+      amount: result.data.amount
+    });
+  } catch (err) {
+    console.error("Error in checkOrderStatus:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+  
 }
