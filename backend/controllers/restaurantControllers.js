@@ -2,12 +2,9 @@ import orderModel from "../models/orderModel.js";
 import restaurantModel from "../models/restaurantModel.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv/config";
-import Cinetpay from "cinetpay-node-sdk";
+import LYGOS from "lygos-sdk";
 
-const cinetpay = new Cinetpay(
-  process.env.CINETPAY_API_KEY,
-  process.env.CINETPAY_SITE_ID
-);
+const lygos = new LYGOS(process.env.LYGOS_API_KEY);
 
 //créer un restaurant
 export async function createRestaurant(req, res) {
@@ -111,150 +108,110 @@ export async function seeDashboardOrders(req, res) {
   res.status(200).json(dashboardOrders);
 }
 
-// export async function payOrder(req, res) {
-//   const paymentData = {
-//     transaction_id: req.order._id,
-//     amount: req.order.totalAmount,
-//     currency: "XOF",
-//     description: req.order.items,
-//     notify_url: "https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672",
-//     return_url: "https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672",
-//     channels: "MOBILE_MONEY", // ou 'CREDIT_CARD', 'MOBILE_MONEY', 'WALLET'
-//   };
-//   cinetpay
-//     .initiatePayment(paymentData)
-//     .then((response) => {
-//       console.log("l'URL de paiement :", response.data.payment_url);
-//     })
-//     .catch((error) => {
-//       console.log(
-//         "Erreur lors de l'initialisation du paiement :",
-//         error.message
-//       );
-//     });
-//   const results = cinetpay.checkTransaction(paymentData.transaction_id);
-//   console.log(results);
-//   // if (results.data.status === "ACCEPTED") {
-//   //   await orderModel.findByIdAndUpdate(req.order._id, { status: "paid" });
-//   //   return res.json({ message: "Paiement validé" });
-//   // } else {
-//   //   res.status(400).json({ error: "Paiement échoué" });
-//   // }
-// }
-
 /**
  * POST /orders/:id/pay
  * Initialise le paiement pour l'ordre d'id = req.params.id
  */
 export async function payOrder(req, res) {
   try {
-    // 2. Récupérer l'ordre
+    // 2. Récupérer la commande
     const order = await orderModel.findById(req.params.id);
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
 
     // 3. Construire le PaymentData
-    /** @type {import('cinetpay-node-sdk').PaymentData} */
     const paymentData = {
-      transaction_id: order.qrCodeId, // identifiant unique de la transaction
       amount: order.totalAmount, // montant total de la commande
-      currency: "XOF", // ou selon votre zone
-      description: `Payment for order ${order._id}`,
-      notify_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
-      return_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
-      channels: "ALL", // ou MOBILE_MONEY, WALLET, ...
+      shop_name:"Fast Cashier",
+      order_id:order.qrCodeId.toString(),
+      message: `Payment for order ${order._id} effectué`,
+      failure_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
+      success_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
     };
 
-    // 4. Appeler CinetPay
-    const response = await cinetpay.initiatePayment(paymentData);
-    // const results = await cinetpay.checkTransaction(paymentData.transaction_id);
-    //console.log(results.data.status);
+    // 4. Appeler lygos
+    const response = await lygos.initPayment(paymentData);
 
-    if (response.code === "201") {
-      // code 201 = succès
-      return res.status(400).json({
-        success_code: response.code,
-        message: response.message,
-        description: response.description,
-        payment_url: response.data.payment_url,
-        payment_token: response.data.payment_token,
-      });
-    } else {
-      return res.status(200).json({
-        error_code: response.code,
-        error: response.message,
-        description: response.description,
-      });
-    }
+    //Gérer les erreurs
+    if (response.error) {
+      return res.status(response.status||400).json({error: response.error})
+    };
+
+    //Retourner l'url de paiement
+    return res.status(200).json({
+      payment_url : response.link,
+      gateway_id : response.order_id
+    });
+
   } catch (err) {
     console.error("Error in payOrder:", err);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
 
-export async function notifyPayment(req, res) {
-  try {
-        // 1) Récupérer le token et les données envoyées
-    const data = req.body;
-    const token = req.get("x-token");
-    const secretKey = process.env.CINETPAY_SECRET_KEY;
-    // 2) Vérifier le token HMAC via la méthode fournie
+// export async function notifyPayment(req, res) {
+//   try {
+//         // 1) Récupérer le token et les données envoyées
+//     const data = req.body;
+//     const token = req.get("x-token");
+//     const secretKey = process.env.CINETPAY_SECRET_KEY;
+//     // 2) Vérifier le token HMAC via la méthode fournie
 
-    const isValid = await Cinetpay.verifyHMACToken(token, secretKey, data);
+//     const isValid = await Cinetpay.verifyHMACToken(token, secretKey, data);
 
-    if (!isValid) {
-      return res.status(401).send("Invalid HMAC token");
-    }
+//     if (!isValid) {
+//       return res.status(401).send("Invalid HMAC token");
+//     }
 
-    const order = await orderModel.findOne({ qrCodeId: data.cpm_trans_id });
-    if (!order) {
-      return res.status(404).send("Order not found");
-    }
-    // 3) Mettre à jour la commande correspondante
+//     const order = await orderModel.findOne({ qrCodeId: data.cpm_trans_id });
+//     if (!order) {
+//       return res.status(404).send("Order not found");
+//     }
+//     // 3) Mettre à jour la commande correspondante
 
-    order.status = "paid";
-    await order.save();
-    // 4) Répondre à CinetPay
+//     order.status = "paid";
+//     await order.save();
+//     // 4) Répondre à CinetPay
 
-    res.status(200).send("OK");
-  } catch (err) {
-    console.error("notifyPayment error:", err);
-    res.status(500).send("Internal Server Error");
-  }
-}
+//     res.status(200).send("OK");
+//   } catch (err) {
+//     console.error("notifyPayment error:", err);
+//     res.status(500).send("Internal Server Error");
+//   }
+// }
 
-export async function checkOrderStatus(req, res) {
+// export async function checkOrderStatus(req, res) {
 
-  try {
-        const order = await orderModel.findById(req.params.id);
-    if (!order) {
-      return res.status(404).json({ error: "Order not found" });
-    }
+//   try {
+//         const order = await orderModel.findById(req.params.id);
+//     if (!order) {
+//       return res.status(404).json({ error: "Order not found" });
+//     }
 
-    // 1) Appel à checkTransaction pour obtenir le statut
-    const result = await cinetpay.checkTransaction(order.qrCodeId);
+//     // 1) Appel à checkTransaction pour obtenir le statut
+//     const result = await cinetpay.checkTransaction(order.qrCodeId);
 
-    if (result.data.status === "ACCEPTED") {
-      // 2) Mettre à jour la commande si nécessaire
-      if (order.status !== "paid") {
-        order.status = "paid";
-        await order.save();
-      }
-    } else {
-      console.log(result.data.status)
-    }
+//     if (result.data.status === "ACCEPTED") {
+//       // 2) Mettre à jour la commande si nécessaire
+//       if (order.status !== "paid") {
+//         order.status = "paid";
+//         await order.save();
+//       }
+//     } else {
+//       console.log(result.data.status)
+//     }
 
-    // 3) Retourner le statut actuel
-    return res.status(200).json({
-      orderId: order._id,
-      status: order.status,
-      payment_method: result.data.payment_method,
-      amount: result.data.amount
-    });
-  } catch (err) {
-    console.error("Error in checkOrderStatus:", err);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
+//     // 3) Retourner le statut actuel
+//     return res.status(200).json({
+//       orderId: order._id,
+//       status: order.status,
+//       payment_method: result.data.payment_method,
+//       amount: result.data.amount
+//     });
+//   } catch (err) {
+//     console.error("Error in checkOrderStatus:", err);
+//     return res.status(500).json({ error: "Internal Server Error" });
+//   }
   
-}
+// }
