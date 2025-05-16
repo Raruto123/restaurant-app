@@ -1,6 +1,6 @@
 import { Router } from "express";
 const router = Router();
-import { createOrder, createRestaurant, getAllRestaurants, login, payOrder, seeDashboardOrders } from "../controllers/restaurantControllers.js";
+import { checkOrderStatus, createOrder, createRestaurant, getAllRestaurants, login, payOrder, seeDashboardOrders } from "../controllers/restaurantControllers.js";
 import { checkUser } from "../middlewares/authMiddleware.js";
 
 //créer restaurant (seul moi peut le faire)
@@ -24,7 +24,7 @@ router.patch("/:id/pay", payOrder);
 // router.post("/:id/notify", express.urlencoded({extended : true}), notifyPayment);
 
 // //pour confirmer par le client
-// router.get("/:id/status", checkOrderStatus);
+router.get("/:id/status", checkOrderStatus);
 
 //générer ou récupérer un code qr
 // router.get("/:id/qr", getCodeQr)

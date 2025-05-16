@@ -81,22 +81,26 @@ export async function createOrder(req, res) {
       qrCodeId: Date.now().toString(),
     });
     await newOrder.save();
-    //Attribuer un token à la connexion
-    const tokenOrder = jwt.sign(
-      { id: newOrder._id },
-      process.env.TOKEN_SECRET,
-      { expiresIn: "3d" }
-    );
-    //Stocker le cookie
-    res
-      .cookie("jwtokenOrder", tokenOrder, {
-        httpOnly: true,
-        maxAge: 3 * 24 * 60 * 60 * 1000,
-        sameSite: "none",
-        secure: true,
-      })
-      .status(200)
-      .json({ message: "Token appliqué à cette commande", id: newOrder._id });
+    res.status(200).json({
+      message : "Commande crée",
+      id : newOrder._id
+    })
+    // //Attribuer un token à la connexion
+    // const tokenOrder = jwt.sign(
+    //   { id: newOrder._id },
+    //   process.env.TOKEN_SECRET,
+    //   { expiresIn: "3d" }
+    // );
+    // //Stocker le cookie
+    // res
+    //   .cookie("jwtokenOrder", tokenOrder, {
+    //     httpOnly: true,
+    //     maxAge: 3 * 24 * 60 * 60 * 1000,
+    //     sameSite: "none",
+    //     secure: true,
+    //   })
+    //   .status(200)
+    //   .json({ message: "Token appliqué à cette commande", id: newOrder._id });
   } catch (err) {
     console.error("Erreur createOrder :", err);
     res.status(400).json({ error: err.message });
@@ -135,7 +139,7 @@ export async function payOrder(req, res) {
 
     //Gérer les erreurs
     if (response.error) {
-      return res.status(response.status||400).json({error: response.error})
+      return res.status(response.status||400).json({error: `voici l'erreur => ${response.error}`})
     };
 
     //Retourner l'url de paiement
@@ -215,3 +219,30 @@ export async function payOrder(req, res) {
 //   }
   
 // }
+
+
+export async function checkOrderStatus(req, res) {
+  try {
+    const order = await orderModel.findById(req.params.id);
+    if (!order) throw new Error("This order doesn't exist");
+
+    const result = await lygos.paymentStatus(order.qrCodeId);
+
+    if (result.status === "success") {
+      order.status = "paid";
+      await order.save();
+    } else if (result.status === "failed") {
+      console.log("Erreur de la commande :", result.order_id)
+    }
+
+
+    return res.status(200).json({
+      orderId : order._id,
+      status : order.status
+    })
+
+  } catch (err) {
+    console.error("Error in checkOrderStatus :", err);
+    return res.status(500).json({error : err.message});
+  }
+}
