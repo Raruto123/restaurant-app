@@ -130,8 +130,10 @@ export async function payOrder(req, res) {
       shop_name:"Fast Cashier",
       order_id:order.qrCodeId.toString(),
       message: `Payment for order ${order._id} effectué`,
-      failure_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
-      success_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
+      failure_url : `http://127.0.0.1:3000/frontend/client-side/pages/paiement-page.html`,
+      success_url : `http://127.0.0.1:3000/frontend/client-side/pages/paiement-page.html`
+      // failure_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
+      // success_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
     };
 
     // 4. Appeler lygos
@@ -231,7 +233,10 @@ export async function checkOrderStatus(req, res) {
     if (result.status === "success") {
       order.status = "paid";
       await order.save();
-    } else if (result.status === "failed") {
+    } else if (result.status === "pending") {
+      console.log("En attente du paiement de la commande :", result.order_id)
+    } 
+    else if (result.status === "failed") {
       console.log("Erreur de la commande :", result.order_id)
     }
 

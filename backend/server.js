@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser";
 import runDatabase from "./config/db.js";
 import restaurantRoutes from "./routes/restaurantRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
-import { checkUser } from "./middlewares/authMiddleware.js";
+import { checkUser, requireAuth } from "./middlewares/authMiddleware.js";
 
 const app = express();
 const port = process.env.PORT
@@ -23,18 +23,21 @@ app.use(cors(
 app.use(express.json());//pour lire req.body
 app.use(express.urlencoded({extended : true}))
 app.use(cookieParser());//pour lire req.cookies
-//jwt
-app.use(checkUser);
-// app.use(checkOrder);
-// app.use(requireAuth);
 
-//routes
-app.use("/api/restaurant", restaurantRoutes);
-app.use("/api/client", orderRoutes);
+//1ere route
 app.get("/", (req, res) => {
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.send(`API is running`);
 })
+
+//jwt
+app.use(checkUser);
+// app.use(requireAuth)
+// app.use(checkOrder);
+
+//routes
+app.use("/api/restaurant", restaurantRoutes);
+app.use("/api/client", orderRoutes);
 
 
 //jwt
