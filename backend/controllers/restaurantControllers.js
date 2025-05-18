@@ -130,10 +130,8 @@ export async function payOrder(req, res) {
       shop_name:"Fast Cashier",
       order_id:order.qrCodeId.toString(),
       message: `Payment for order ${order._id} effectué`,
-      failure_url : `http://127.0.0.1:3000/frontend/client-side/pages/paiement-page.html`,
-      success_url : `http://127.0.0.1:3000/frontend/client-side/pages/paiement-page.html`
-      // failure_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
-      // success_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
+      failure_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
+      success_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`
     };
 
     // 4. Appeler lygos
@@ -229,6 +227,10 @@ export async function checkOrderStatus(req, res) {
     if (!order) throw new Error("This order doesn't exist");
 
     const result = await lygos.paymentStatus(order.qrCodeId);
+    if (!result) throw new Error("Aucun paiement initié avec cette id")
+
+    const payments = await lygos.listOfPayment();
+    console.log(payments);
 
     if (result.status === "success") {
       order.status = "paid";
@@ -243,7 +245,10 @@ export async function checkOrderStatus(req, res) {
 
     return res.status(200).json({
       orderId : order._id,
-      status : order.status
+      status : order.status,
+      lygosStatus : result.status,
+      lygosResultKeys : Object.keys(result),
+      lygosResultValues : Object.values(result)
     })
 
   } catch (err) {
