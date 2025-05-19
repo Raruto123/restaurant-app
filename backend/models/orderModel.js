@@ -29,7 +29,10 @@ const orderSchema = new mongoose.Schema({
         type : String,
         required : true,
         unique : true
-    }
+    },
+    // qrCodeUrl : {
+    //     type : String
+    // }
 }, {timestamps : true}
 )
 

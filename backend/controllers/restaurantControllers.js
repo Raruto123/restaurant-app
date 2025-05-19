@@ -3,6 +3,7 @@ import restaurantModel from "../models/restaurantModel.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv/config";
 import LYGOS from "lygos-sdk";
+import QRCode from "qrcode";
 
 const lygos = new LYGOS(process.env.LYGOS_API_KEY);
 
@@ -81,26 +82,18 @@ export async function createOrder(req, res) {
       qrCodeId: Date.now().toString(),
     });
     await newOrder.save();
+     //on génère l'url du site qui voit la commande
+    const clientUrl = `${process.env.FRONTEND_URL}/order.html?id=${newOrder._id}&total=${newOrder.totalAmount}`;
+
+    //on génère le code qr 
+    const qrCodeDataUrl = await QRCode.toDataURL(clientUrl).then((url) => url);
     res.status(200).json({
       message : "Commande crée",
-      id : newOrder._id
+      total : newOrder.totalAmount,
+      id : newOrder._id,
+      qrCode : qrCodeDataUrl,
+      produits : newOrder.items
     })
-    // //Attribuer un token à la connexion
-    // const tokenOrder = jwt.sign(
-    //   { id: newOrder._id },
-    //   process.env.TOKEN_SECRET,
-    //   { expiresIn: "3d" }
-    // );
-    // //Stocker le cookie
-    // res
-    //   .cookie("jwtokenOrder", tokenOrder, {
-    //     httpOnly: true,
-    //     maxAge: 3 * 24 * 60 * 60 * 1000,
-    //     sameSite: "none",
-    //     secure: true,
-    //   })
-    //   .status(200)
-    //   .json({ message: "Token appliqué à cette commande", id: newOrder._id });
   } catch (err) {
     console.error("Erreur createOrder :", err);
     res.status(400).json({ error: err.message });
@@ -128,7 +121,7 @@ export async function payOrder(req, res) {
     const paymentData = {
       amount: order.totalAmount, // montant total de la commande
       shop_name:"Fast Cashier",
-      order_id:order.qrCodeId.toString(),
+      order_id:order.qrCodeId,
       message: `Payment for order ${order._id} effectué`,
       failure_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
       success_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`
@@ -145,7 +138,9 @@ export async function payOrder(req, res) {
     //Retourner l'url de paiement
     return res.status(200).json({
       payment_url : response.link,
-      gateway_id : response.order_id
+      gateway_id : response.order_id,
+      responseKeys : Object.keys(response),
+      responseValues : Object.values(response)
     });
 
   } catch (err) {
@@ -229,8 +224,8 @@ export async function checkOrderStatus(req, res) {
     const result = await lygos.paymentStatus(order.qrCodeId);
     if (!result) throw new Error("Aucun paiement initié avec cette id")
 
-    const payments = await lygos.listOfPayment();
-    console.log(payments);
+    // const payments = await lygos.listOfPayment();
+    // // console.log(payments);
 
     if (result.status === "success") {
       order.status = "paid";
