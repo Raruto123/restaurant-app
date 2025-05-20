@@ -18,6 +18,10 @@ router.post("/create-order", requireAuth, checkUser, createOrder);
 //voir la liste des commandes dans le dashboard
 router.get("/dashboard-orders", requireAuth, seeDashboardOrders);
 
+router.patch("/:id/modify", requireAuth, updateOrder);
+
+router.delete('/:id/', requireAuth, deleteOrder);
+
 // pour initaliser le paiement quand on envoie le code qr qui contiendra le payment_url
 router.patch("/:id/pay", requireAuth, payOrder);
 //pour confirmer au près de l'api de lygos que la commande a été payé et changé le status de la commande

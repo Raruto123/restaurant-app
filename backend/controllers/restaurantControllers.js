@@ -105,6 +105,39 @@ export async function seeDashboardOrders(req, res) {
   res.status(200).json(dashboardOrders);
 }
 
+
+export async function updateOrder(req, res) {
+  try {
+    const orderId = req.params.id;
+    const {items, tableNumber} = req.body;
+
+    //on récupère la commande et on vérifie son propriétaire
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.status(404).json({error : "Commande non trouvée"});
+    }
+
+    if (order.restaurant.toString()!== req.restaurant._id.toString()) {
+      return res.status(403).json({error : "Accès refusé cette commande n'appartient pas à votre restaurant"})
+    }
+
+    //on recalcule le total des items modifiés
+    let total;
+    if (items) {
+      order.items = items;
+      total = items.reduce((sum, {price, qty}) => sum+price, 0);
+      order.totalAmount = total;
+    }
+
+    if (tableNumber) order.tableNumber = tableNumber;
+    await order.save();
+  } catch (err) {
+    res.status(500).json({error : err.message})
+  }
+}
+
+
+
 /**
  * POST /orders/:id/pay
  * Initialise le paiement pour l'ordre d'id = req.params.id
@@ -227,10 +260,10 @@ export async function checkOrderStatus(req, res) {
     // const payments = await lygos.listOfPayment();
     // // console.log(payments);
 
-    if (result.status === "success") {
+    if (result.status === "completed") {
       order.status = "paid";
       await order.save();
-    } else if (result.status === "pending") {
+    } else if (result.status === "accepted") {
       console.log("En attente du paiement de la commande :", result.order_id)
     } 
     else if (result.status === "failed") {
