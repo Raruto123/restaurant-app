@@ -7,17 +7,19 @@
     <link rel="stylesheet" href="/frontend/admin-side/css/login-page.css">
 </head>
 <body>
-    <form action="" method="post" id="signInForm">
+    <form id="signInForm">
         <h3>CONNEXION DE L'ADMIN</h3>
+        <div id="errorMessage"></div>
         <label for="email">E-mail</label>
-        <input type="email" name="email" id="emailRestaurant">
+        <input type="email" name="email" id="emailRestaurant" required autocomplete>
         <label for="password">Mot de passe</label>
-        <input type="password" name="password" id="passwordRestaurant">
+        <input type="password" name="password" id="passwordRestaurant" required autocomplete>
         <span>
             <!-- quand l'oeil se ferme tu changes juste le type password en texte par exemple -->
-            <input type="button" value="👁️">
+            <input type="button" value="👁️" id="togglePassword">
         </span>
         <button type="submit">Connexion</button>
     </form>
+    <script src="/frontend/admin-side/js/restaurantLogin.js"></script>
 </body>
 </html>

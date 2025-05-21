@@ -60,3 +60,7 @@ body {
 #signInForm button[type="submit"]:hover {
   background-color: #2e6ac3;
 }
+
+#errorMessage {
+  color: red;
+}

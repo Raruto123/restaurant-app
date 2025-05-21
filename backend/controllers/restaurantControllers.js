@@ -125,18 +125,39 @@ export async function updateOrder(req, res) {
     let total;
     if (items) {
       order.items = items;
-      total = items.reduce((sum, {price, qty}) => sum+price, 0);
+      total = items.reduce((sum, {price, qty}) => sum + price * qty, 0);
       order.totalAmount = total;
     }
 
     if (tableNumber) order.tableNumber = tableNumber;
     await order.save();
+    res.json({message : "Commande modifiée", order : order})
   } catch (err) {
     res.status(500).json({error : err.message})
   }
 }
 
+export async function deleteOrder(req, res) {
+  try {
+    const orderId = req.params.id;
 
+    //on récupère la commande et on vérifie le propriétaire
+    const order = await orderModel.findById(orderId);
+    if(!order) {
+      return res.status(404).json({error : "Commande non trouvée"});
+    }
+
+    if (order.restaurant.toString() !== req.restaurant._id.toString()) {
+      return res.status(403).json({error : "Cette commande ne provient pas de votre restaurant"});
+    }
+
+    await orderModel.findByIdAndDelete(orderId);
+
+    res.json({message : "Commande supprimée"})
+  } catch (err) {
+    res.status(500).json({error : err.message});
+  }
+}
 
 /**
  * POST /orders/:id/pay

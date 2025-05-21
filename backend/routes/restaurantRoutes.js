@@ -1,6 +1,6 @@
 import { Router } from "express";
 const router = Router();
-import { checkOrderStatus, createOrder, createRestaurant, getAllRestaurants, login, payOrder, seeDashboardOrders } from "../controllers/restaurantControllers.js";
+import { checkOrderStatus, createOrder, createRestaurant, deleteOrder, getAllRestaurants, login, payOrder, seeDashboardOrders, updateOrder } from "../controllers/restaurantControllers.js";
 import { checkUser, requireAuth } from "../middlewares/authMiddleware.js";
 
 //créer restaurant (seul moi peut le faire)
@@ -20,7 +20,7 @@ router.get("/dashboard-orders", requireAuth, seeDashboardOrders);
 
 router.patch("/:id/modify", requireAuth, updateOrder);
 
-router.delete('/:id/', requireAuth, deleteOrder);
+router.delete('/:id/delete', requireAuth, deleteOrder);
 
 // pour initaliser le paiement quand on envoie le code qr qui contiendra le payment_url
 router.patch("/:id/pay", requireAuth, payOrder);
