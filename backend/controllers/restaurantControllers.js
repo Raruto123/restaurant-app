@@ -45,15 +45,14 @@ export async function login(req, res) {
       { expiresIn: "3d" }
     );
     //Stocker le cookie
-    res
-      .cookie("jwtoken", token, {
-        httpOnly: true,
-        maxAge: 3 * 24 * 60 * 60 * 1000,
-        sameSite: "none",
-        secure: true,
-      })
-      .status(200)
-      .json({ message: "Connecté", id: restaurantUser._id });
+    res.cookie("jwtoken", token, {
+      httpOnly: true,
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+      sameSite: "lax", //ou "strict"
+      // secure: true, true c'est uniquement pour le https en mode dev tu n'as pas droit à cela
+      secure: false,
+    });
+    res.status(200).json({ message: "Connecté", id: restaurantUser._id });
   } catch (err) {
     console.log("Password entered :", password);
     console.error("une erreur est surevenue lors de la connexion", err);
@@ -82,18 +81,18 @@ export async function createOrder(req, res) {
       qrCodeId: Date.now().toString(),
     });
     await newOrder.save();
-     //on génère l'url du site qui voit la commande
+    //on génère l'url du site qui voit la commande
     const clientUrl = `${process.env.FRONTEND_URL}/order.html?id=${newOrder._id}&total=${newOrder.totalAmount}`;
 
-    //on génère le code qr 
+    //on génère le code qr
     const qrCodeDataUrl = await QRCode.toDataURL(clientUrl).then((url) => url);
     res.status(200).json({
-      message : "Commande crée",
-      total : newOrder.totalAmount,
-      id : newOrder._id,
-      qrCode : qrCodeDataUrl,
-      produits : newOrder.items
-    })
+      message: "Commande crée",
+      total: newOrder.totalAmount,
+      id: newOrder._id,
+      qrCode: qrCodeDataUrl,
+      produits: newOrder.items,
+    });
   } catch (err) {
     console.error("Erreur createOrder :", err);
     res.status(400).json({ error: err.message });
@@ -105,35 +104,39 @@ export async function seeDashboardOrders(req, res) {
   res.status(200).json(dashboardOrders);
 }
 
-
 export async function updateOrder(req, res) {
   try {
     const orderId = req.params.id;
-    const {items, tableNumber} = req.body;
+    const { items, tableNumber } = req.body;
 
     //on récupère la commande et on vérifie son propriétaire
     const order = await orderModel.findById(orderId);
     if (!order) {
-      return res.status(404).json({error : "Commande non trouvée"});
+      return res.status(404).json({ error: "Commande non trouvée" });
     }
 
-    if (order.restaurant.toString()!== req.restaurant._id.toString()) {
-      return res.status(403).json({error : "Accès refusé cette commande n'appartient pas à votre restaurant"})
+    if (order.restaurant.toString() !== req.restaurant._id.toString()) {
+      return res
+        .status(403)
+        .json({
+          error:
+            "Accès refusé cette commande n'appartient pas à votre restaurant",
+        });
     }
 
     //on recalcule le total des items modifiés
     let total;
     if (items) {
       order.items = items;
-      total = items.reduce((sum, {price, qty}) => sum + price * qty, 0);
+      total = items.reduce((sum, { price, qty }) => sum + price * qty, 0);
       order.totalAmount = total;
     }
 
     if (tableNumber) order.tableNumber = tableNumber;
     await order.save();
-    res.json({message : "Commande modifiée", order : order})
+    res.json({ message: "Commande modifiée", order: order });
   } catch (err) {
-    res.status(500).json({error : err.message})
+    res.status(500).json({ error: err.message });
   }
 }
 
@@ -143,19 +146,21 @@ export async function deleteOrder(req, res) {
 
     //on récupère la commande et on vérifie le propriétaire
     const order = await orderModel.findById(orderId);
-    if(!order) {
-      return res.status(404).json({error : "Commande non trouvée"});
+    if (!order) {
+      return res.status(404).json({ error: "Commande non trouvée" });
     }
 
     if (order.restaurant.toString() !== req.restaurant._id.toString()) {
-      return res.status(403).json({error : "Cette commande ne provient pas de votre restaurant"});
+      return res
+        .status(403)
+        .json({ error: "Cette commande ne provient pas de votre restaurant" });
     }
 
     await orderModel.findByIdAndDelete(orderId);
 
-    res.json({message : "Commande supprimée"})
+    res.json({ message: "Commande supprimée" });
   } catch (err) {
-    res.status(500).json({error : err.message});
+    res.status(500).json({ error: err.message });
   }
 }
 
@@ -174,11 +179,11 @@ export async function payOrder(req, res) {
     // 3. Construire le PaymentData
     const paymentData = {
       amount: order.totalAmount, // montant total de la commande
-      shop_name:"Fast Cashier",
-      order_id:order.qrCodeId,
+      shop_name: "Fast Cashier",
+      order_id: order.qrCodeId,
       message: `Payment for order ${order._id} effectué`,
       failure_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
-      success_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`
+      success_url: `https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672`,
     };
 
     // 4. Appeler lygos
@@ -186,17 +191,18 @@ export async function payOrder(req, res) {
 
     //Gérer les erreurs
     if (response.error) {
-      return res.status(response.status||400).json({error: `voici l'erreur => ${response.error}`})
-    };
+      return res
+        .status(response.status || 400)
+        .json({ error: `voici l'erreur => ${response.error}` });
+    }
 
     //Retourner l'url de paiement
     return res.status(200).json({
-      payment_url : response.link,
-      gateway_id : response.order_id,
-      responseKeys : Object.keys(response),
-      responseValues : Object.values(response)
+      payment_url: response.link,
+      gateway_id: response.order_id,
+      responseKeys: Object.keys(response),
+      responseValues: Object.values(response),
     });
-
   } catch (err) {
     console.error("Error in payOrder:", err);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -266,9 +272,8 @@ export async function payOrder(req, res) {
 //     console.error("Error in checkOrderStatus:", err);
 //     return res.status(500).json({ error: "Internal Server Error" });
 //   }
-  
-// }
 
+// }
 
 export async function checkOrderStatus(req, res) {
   try {
@@ -276,7 +281,7 @@ export async function checkOrderStatus(req, res) {
     if (!order) throw new Error("This order doesn't exist");
 
     const result = await lygos.paymentStatus(order.qrCodeId);
-    if (!result) throw new Error("Aucun paiement initié avec cette id")
+    if (!result) throw new Error("Aucun paiement initié avec cette id");
 
     // const payments = await lygos.listOfPayment();
     // // console.log(payments);
@@ -285,23 +290,20 @@ export async function checkOrderStatus(req, res) {
       order.status = "paid";
       await order.save();
     } else if (result.status === "accepted") {
-      console.log("En attente du paiement de la commande :", result.order_id)
-    } 
-    else if (result.status === "failed") {
-      console.log("Erreur de la commande :", result.order_id)
+      console.log("En attente du paiement de la commande :", result.order_id);
+    } else if (result.status === "failed") {
+      console.log("Erreur de la commande :", result.order_id);
     }
 
-
     return res.status(200).json({
-      orderId : order._id,
-      status : order.status,
-      lygosStatus : result.status,
-      lygosResultKeys : Object.keys(result),
-      lygosResultValues : Object.values(result)
-    })
-
+      orderId: order._id,
+      status: order.status,
+      lygosStatus: result.status,
+      lygosResultKeys: Object.keys(result),
+      lygosResultValues: Object.values(result),
+    });
   } catch (err) {
     console.error("Error in checkOrderStatus :", err);
-    return res.status(500).json({error : err.message});
+    return res.status(500).json({ error: err.message });
   }
 }

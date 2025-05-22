@@ -38,9 +38,9 @@ export async function requireAuth(req, res, next) {
         if (!token) throw new Error("Non authentifié veuillez vous connecter");
         const decodedId = jwt.verify(token, process.env.TOKEN_SECRET);
         // console.log('🗝️ decoded JWT =', decodedId);
-        const restaurant = restaurantModel.findById(decodedId.id);
+        req.restaurant = restaurantModel.findById(decodedId.id);
         // console.log('🍴 found restaurant =', restaurant);
-        if (!restaurant) throw new Error("Aucun restaurant trouvable");
+        if (!req.restaurant) throw new Error("Aucun restaurant trouvable");
         //on stocke le restaurant avec son token
         // req.restaurant = restaurant;
         next();

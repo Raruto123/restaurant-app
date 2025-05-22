@@ -14,15 +14,15 @@ const port = process.env.PORT
 await runDatabase()
 
 //middlewares
+app.use(express.json());//pour lire req.body
+app.use(express.urlencoded({extended : true}));
+app.use(cookieParser());//pour lire req.cookies
 app.use(cors(
     {
-        origin : true,
-        credentials : true
+        origin : process.env.FRONTEND_URL,
+        credentials : true//important pour les cookies
     }
 ));
-app.use(express.json());//pour lire req.body
-app.use(express.urlencoded({extended : true}))
-app.use(cookieParser());//pour lire req.cookies
 
 //1ere route
 app.get("/", (req, res) => {

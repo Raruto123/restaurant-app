@@ -15,56 +15,31 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   errorMessage.textContent = ""; //reset l'erreur
 
-  const message = document.getElementById("emailRestaurant").value;
-  const id = restaurantPassword.value;
+  const email = document.getElementById("emailRestaurant").value;
+  const password = restaurantPassword.value;
+  try {
+      const response = await fetch("http://127.0.0.1:23000/api/restaurant/login", {
+          headers : {
+              "Content-Type" : "application/json"
+          },
+          method : "POST",
+          credentials : "include",
+          body : JSON.stringify({email, password})//dans le req.body y'a email et password
+      })
 
-  fetch("http://localhost:23000/api/restaurant/login", {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-    .then((response) => response.json())
-    .then((response) => console.log(response))
-    .catch((err) => console.error(err));
-  //   try {
-  //     const response = fetch("http://localhost:23000/api/restaurant/login", {
-  //       method: "POST",
-  //       credentials: "include",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: new FormData(),
-  //     });
+      const data = await response.json();
 
-  //     const data = Object.keys(response);
+      if (response.ok) {
+          alert(data.message + ". Redirection vers votre dashboard...");
+          setTimeout(() =>{
+            window.location.href="/frontend/admin-side/pages/dashboard.html"
+          }, 300)
+      } else {
+          errorMessage.textContent = data.error || "Erreur de connexion"
+      }
 
-  //     console.log(data);
-  //   } catch (error) {
-  //     errorMessage.textContent = "Erreur réseau ou serveur";
-  //     console.log(error);
-  //   }
-  // try {
-  //     const response = await fetch("http://localhost:23000/api/restaurant/login", {
-  //         headers : {
-  //             "Content-Type" : "application/json"
-  //         },
-  //         method : "POST",
-  //         credentials : "include",
-  //         body : JSON.stringify({email, password})//dans le req.body y'a email et password
-  //     })
-
-  //     const data = await response.json();
-
-  //     if (response.ok) {
-  //         window.location.href="https://www.google.com"
-  //     } else {
-  //         errorMessage.textContent = data.error || "Erreur de connexion"
-  //     }
-
-  // } catch (error) {
-  //     errorMessage.textContent = "Erreur réseau ou serveur";
-  //     console.log(error);
-  // }
+  } catch (error) {
+      errorMessage.textContent = "Erreur réseau ou serveur";
+      console.log(error);
+  }
 });
