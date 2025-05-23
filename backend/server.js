@@ -40,8 +40,7 @@ app.use("/api/restaurant", restaurantRoutes);
 app.use("/api/client", orderRoutes);
 
 
-//jwt
-
+// console.log(app._router.stack.map(r => r.route && r.route.path).filter(Boolean))
 //listen
 app.listen(port, () => {
     console.log(`serveur démarré sur le port ${port}`)

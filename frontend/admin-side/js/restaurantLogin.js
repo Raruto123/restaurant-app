@@ -2,6 +2,8 @@ const togglePassword = document.getElementById("togglePassword");
 const restaurantPassword = document.getElementById("passwordRestaurant");
 const form = document.getElementById("signInForm");
 const errorMessage = document.getElementById("errorMessage");
+const baseUrl = window.APP_CONFIG.API_BASE_URL;
+
 
 togglePassword.addEventListener("click", () => {
   //afficher ou masquer le mot de passe
@@ -18,7 +20,7 @@ form.addEventListener("submit", async (e) => {
   const email = document.getElementById("emailRestaurant").value;
   const password = restaurantPassword.value;
   try {
-      const response = await fetch("http://127.0.0.1:23000/api/restaurant/login", {
+      const response = await fetch(baseUrl + "/restaurant/login", {
           headers : {
               "Content-Type" : "application/json"
           },
@@ -26,7 +28,15 @@ form.addEventListener("submit", async (e) => {
           credentials : "include",
           body : JSON.stringify({email, password})//dans le req.body y'a email et password
       })
-
+      // Vérifie le type de contenu AVANT de parser
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        // Ce n’est pas du JSON : logge la vraie réponse pour diagnostiquer
+        const text = await response.text();
+        console.error('Réponse inattendue (pas du JSON) :', text);
+        errorMessage.textContent = "Réponse inattendue du serveur.";
+        return;
+      }
       const data = await response.json();
 
       if (response.ok) {

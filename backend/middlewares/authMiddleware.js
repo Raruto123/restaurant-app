@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import restaurantModel from "../models/restaurantModel.js";
 import dotenv from "dotenv/config"
-// import orderModel from "../models/orderModel.js";
 
 // Check le token de l'utilisateur à n'importe quel endroit de l'application
 export function checkUser(req, res, next) {
@@ -49,24 +48,10 @@ export async function requireAuth(req, res, next) {
     }
 }
 
-
-//check le token de la commande à n'importe quel moment de l'application 
-// export function checkOrder(req, res, next) {
-//     //Récupérer le token
-//     const tokenOrder = req.cookies.jwtokenOrder;
-//     if (tokenOrder) {
-//         jwt.verify(tokenOrder, process.env.TOKEN_SECRET, async (err, decodedToken) => {
-//             if (err) {
-//                 req.order = null;
-//                 next();
-//             } else {
-//                 let order = await orderModel.findById(decodedToken.id);
-//                 req.order = order;
-//             }
-//             next();
-//         });
-//     } else {
-//         req.order = null;
-//         next();
-//     }
-// }
+//protéger mes pages front
+export function checkAuth(req, res) {
+    if (!req.restaurant) {
+        return res.status(401).json({error : "Non authentifié"});
+    }
+    return res.status(200).json({id : req.restaurant._id});
+}

@@ -1,7 +1,7 @@
 import { Router } from "express";
 const router = Router();
 import { checkOrderStatus, createOrder, createRestaurant, deleteOrder, getAllRestaurants, login, payOrder, seeDashboardOrders, updateOrder } from "../controllers/restaurantControllers.js";
-import { checkUser, requireAuth } from "../middlewares/authMiddleware.js";
+import { checkAuth, checkUser, requireAuth } from "../middlewares/authMiddleware.js";
 
 //créer restaurant (seul moi peut le faire)
 router.post('/create-restaurant', createRestaurant)
@@ -11,6 +11,8 @@ router.get('/get-all-restaurants', getAllRestaurants)
 //se connecter
 router.post("/login", login);
 
+//pour protéger mes pages front
+router.get("/me", requireAuth, checkUser, checkAuth);
 
 //creer une commande requiert d'être connecté
 router.post("/create-order", requireAuth, checkUser, createOrder);
