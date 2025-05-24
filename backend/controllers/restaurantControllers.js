@@ -100,7 +100,7 @@ export async function createOrder(req, res) {
 }
 
 export async function seeDashboardOrders(req, res) {
-  const dashboardOrders = await orderModel.find();
+  const dashboardOrders = await orderModel.find({restaurant : req.restaurant._id.toString()});
   res.status(200).json(dashboardOrders);
 }
 

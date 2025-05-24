@@ -1,19 +1,44 @@
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f7f8fa;
+    margin: 0;
+    padding: 30px;
+}
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
 #container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: 50px
+    gap: 8px;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
 }
-
-#container>div:not(.rows) {
-    display: flex;
-    flex-direction: column;
-    background-color: #8ca0ff;
-    width: auto;
-    height: 50px;
-    border: 1px solid;
+.header {
+    background: #8ca0ff;
+    color: #fff;
+    padding: 15px 10px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 5px 5px 0 0;
 }
-
-.rows {
-    height: 100px;
-    border: 1px solid;
+.row {
+    background: #fff;
+    padding: 12px 8px;
+    border-radius: 4px;
+    box-shadow: 0 0 1px #ccc;
+    text-align: center;
+    font-size: 16px;
+}
+.status-paid {
+    color: #22bb33;
+    font-weight: bold;
+}
+.status-unpaid {
+    color: #bb2222;
+    font-weight: bold;
 }

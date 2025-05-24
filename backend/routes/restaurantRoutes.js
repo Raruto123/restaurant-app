@@ -18,11 +18,11 @@ router.get("/me", requireAuth, checkUser, checkAuth);
 router.post("/create-order", requireAuth, checkUser, createOrder);
 
 //voir la liste des commandes dans le dashboard
-router.get("/dashboard-orders", requireAuth, seeDashboardOrders);
+router.get("/dashboard-orders", requireAuth, checkUser, seeDashboardOrders);
 
-router.patch("/:id/modify", requireAuth, updateOrder);
+router.patch("/:id/modify", requireAuth, checkUser, updateOrder);
 
-router.delete('/:id/delete', requireAuth, deleteOrder);
+router.delete('/:id/delete', requireAuth, checkUser, deleteOrder);
 
 // pour initaliser le paiement quand on envoie le code qr qui contiendra le payment_url
 router.patch("/:id/pay", requireAuth, payOrder);
