@@ -1,4 +1,9 @@
 const baseUrl = window.APP_CONFIG.API_BASE_URL;
+const restaurantId = window.APP_CONFIG.RESTAURANT_ID;
+
+function decodeId(id) {
+  if (id === restaurantId) return "Dashboard de Noom Hôtel";
+}
 
 async function checkAuthOrRedirect() {
   try {
@@ -19,10 +24,10 @@ async function checkAuthOrRedirect() {
         window.location.href = "/frontend/admin-side/pages/login-page.html";
       }, 200);
       return;
+    } else {
+      const restaurantName = document.getElementById("restaurant-name");
+      restaurantName.textContent = decodeId(data.id);
     }
-    // else {
-    //   alert(`Bienvenue dans votre dashboard\ ${data.id}`);
-    // }
   } catch (error) {
     //problème reseau retourne à la page de connexion
     window.location.href = "/frontend/admin-side/pages/login-page.html";
@@ -34,8 +39,25 @@ checkAuthOrRedirect();
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("container");
   const sortSelect = document.getElementById("sort-select");
+  const datePicker = document.getElementById("date-picker");
+  const dateEndPicker = document.getElementById("date-end-picker");
+  const showTodayBtn = document.getElementById("show-today-btn")
 
-  async function fetchOrders(sort = "oldest") {
+
+  //fonction utilitaire pour formater le temps yyyy-mm-dd
+  function toShortDate(date) {
+    return date.toISOString().split("T")[0];//"2011-10-05"
+  }
+
+  //retourne true si la commande est dans l'intervalle (dateDebut incluse, dateFin incluse)
+  function isOrderInRange(order, dateDebut, dateFin) {
+    const created = toShortDate(new Date(order.createdAt));//une nouvelle date formatée est crée
+    //tu verifies si elle est dans l'intervalle
+    return (!dateDebut || created >= dateDebut) && (!dateFin || created <= dateFin)
+  }
+
+
+  async function fetchOrders(sort = "oldest", dateStart, dateEnd) {
     //récupérer les commandes
     const response = await fetch(baseUrl + "/restaurant/dashboard-orders", {
       method: "GET",
@@ -45,20 +67,31 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     console.log(orders);
 
-    //Trier par date
-    orders.sort((a, b) => {
+    //Filtrer par date
+    let filtered = orders;
+    if (dateStart || dateStart) {
+      filtered = orders.filter(order => isOrderInRange(order, dateStart, dateEnd))
+    } else {
+      // Par défaut : seulement les dates d'aujourd'hui
+      const today = toShortDate(new Date());
+      filtered = orders.filter(order => toShortDate(new Date(order.createdAt)) === today);
+    }
+
+    // Trie par date
+    filtered.sort((a, b) => {
       if (sort === "latest") {
         return new Date(b.createdAt) - new Date(a.createdAt);
       } else {
         return new Date(a.createdAt) - new Date(b.createdAt);
       }
     });
+
     // Efface les anciennes lignes (on garde les 4 premières = headers)
     while (container.children.length > 4)
       container.removeChild(container.lastChild);
 
     //ajouter les commandes
-    for (const order of orders) {
+    for (const order of filtered) {
       //Table
       const divTable = document.createElement("div");
       divTable.className = "row";
@@ -66,16 +99,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       //Commande
       const divOrder = document.createElement("div");
       divOrder.className = "row";
-      divOrder.textContent = order.items.map((item) => `${item.name} x ${item.qty}`).join(", ");
-
-      console.log(divTable.textContent)
+      divOrder.textContent = order.items
+        .map((item) => `${item.name} x ${item.qty}`)
+        .join(", ");
 
       //Statut
       const divStatut = document.createElement("div");
       divStatut.className =
         "row" + (order.status === "paid" ? "status-paid" : "status-unpaid");
       divStatut.textContent =
-        order.status === "paid" ? "Payé ✅" : "Non payé ❌";
+        order.status === "paid" ? "Payé ✅" : "En attente ⌛️";
       //Total
       const divTotal = document.createElement("div");
       divTotal.className = "row";
@@ -92,7 +125,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   //Tri dynamique
   sortSelect.addEventListener("change", (e) => {
-    fetchOrders(e.target.value);
+    fetchOrders(e.target.value, datePicker.value, dateEndPicker.value);
+  });
+
+  datePicker.addEventListener("change", (e) => {
+    fetchOrders(e.target.value, datePicker.value, dateEndPicker.value);
+  })
+    dateEndPicker.addEventListener("change", () => {
+    fetchOrders(sortSelect.value, datePicker.value, dateEndPicker.value);
+  });
+
+    showTodayBtn.addEventListener("click", () => {
+    datePicker.value = "";
+    dateEndPicker.value = "";
+    fetchOrders(sortSelect.value); // affiche seulement aujourd'hui
   });
 
   document.getElementById("create-order-btn").addEventListener("click", () => {
