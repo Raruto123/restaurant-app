@@ -1,37 +1,78 @@
 <!DOCTYPE html>
 <html lang="fr-CI">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dahsboard</title>
-    <link rel="stylesheet" href="/frontend/admin-side/css/dashboard.css">
-</head>
-<body>
+    <link rel="stylesheet" href="/frontend/admin-side/css/dashboard.css" />
+  </head>
+  <!-- Création de commande -->
+  <div id="order-modal" class="modal">
+    <div class="modal-content">
+      <span id="close-modal" class="close">&times;</span>
+      <h3>Nouvelle Commande</h3>
+      <form id="order-form">
+        <label
+          >Numéro de table :
+          <input type="number" id="table-number" required />
+        </label>
+        <div id="items-list">
+          <div class="item-row">
+            <input
+              type="text"
+              class="item-name"
+              placeholder="Nom du produit"
+              required
+            />
+            <input
+              type="number"
+              class="item-price"
+              placeholder="Prix(FCFA)"
+              min="0"
+              required
+            />
+            <input
+              type="number"
+              class="item-qty"
+              placeholder="Quantité"
+              min="1"
+              required
+            />
+          </div>
+        </div>
+        <button type="button" id="add-item">Ajouter un produit</button>
+        <button type="submit">Créer la commande</button>
+      </form>
+    </div>
+  </div>
+  <body>
     <div class="dashboard-header">
-        <h2>Commandes du jour</h2>
-        <button id="create-order-btn">✚ Nouvelle Commande</button>
-        <select name="sorting" id="sort-select">
-            <option value="oldest">Trier : Plus ancien</option>
-            <option value="latest">Trier : Plus récent</option>
-        </select>
-        <h3 id="restaurant-name">Test</h3>
+      <h2>Commandes du jour</h2>
+      <button id="create-order-btn">✚ Nouvelle Commande</button>
+      <select name="sorting" id="sort-select">
+        <option value="oldest">Trier : Plus ancien</option>
+        <option value="latest">Trier : Plus récent</option>
+      </select>
+      <h3 id="restaurant-name">Test</h3>
     </div>
     <div class="date-filter">
-        <label for="date-picker">Filtrer par date :</label>
-        <input type="date" id="date-picker">
-        <label for="date-end-picker" style="margin-left:8px;">à</label>
-        <input type="date" id="date-end-picker">
-        <button id="show-btn-today">Aujourd'hui</button>
+      <label for="date-picker">Filtrer par date :</label>
+      <input type="date" id="date-picker" />
+      <label for="date-end-picker" style="margin-left: 8px">à</label>
+      <input type="date" id="date-end-picker" />
+      <button id="show-btn-today">Aujourd'hui</button>
     </div>
     <div id="container">
-        <!-- En-têtes -->
-         <div class="header">Numéro de table</div>
-         <div class="header">Détails de la commande</div>
-         <div class="header">Total</div>
-         <div class="header">Statut de la commande</div>
-         <!-- Les commandes suivantes seront insérées en JS -->
+      <!-- En-têtes -->
+      <div class="header">Numéro de table</div>
+      <div class="header">Détails de la commande</div>
+      <div class="header">Total</div>
+      <div class="header">Statut de la commande</div>
+      <div class="header">QR Code</div>
+      <div class="header">Paiement</div>
+      <!-- Les commandes suivantes seront insérées en JS -->
     </div>
     <script src="/frontend/config.js"></script>
     <script src="/frontend/admin-side/js/restaurantDashboard.js"></script>
-</body>
+  </body>
 </html>

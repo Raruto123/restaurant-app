@@ -41,21 +41,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   const sortSelect = document.getElementById("sort-select");
   const datePicker = document.getElementById("date-picker");
   const dateEndPicker = document.getElementById("date-end-picker");
-  const showTodayBtn = document.getElementById("show-today-btn")
-
+  const showTodayBtn = document.getElementById("show-btn-today");
 
   //fonction utilitaire pour formater le temps yyyy-mm-dd
   function toShortDate(date) {
-    return date.toISOString().split("T")[0];//"2011-10-05"
+    return date.toISOString().split("T")[0]; //"2011-10-05"
   }
 
   //retourne true si la commande est dans l'intervalle (dateDebut incluse, dateFin incluse)
   function isOrderInRange(order, dateDebut, dateFin) {
-    const created = toShortDate(new Date(order.createdAt));//une nouvelle date formatée est crée
+    const created = toShortDate(new Date(order.createdAt)); //une nouvelle date formatée est crée
     //tu verifies si elle est dans l'intervalle
-    return (!dateDebut || created >= dateDebut) && (!dateFin || created <= dateFin)
+    return (
+      (!dateDebut || created >= dateDebut) && (!dateFin || created <= dateFin)
+    );
   }
-
 
   async function fetchOrders(sort = "oldest", dateStart, dateEnd) {
     //récupérer les commandes
@@ -70,11 +70,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     //Filtrer par date
     let filtered = orders;
     if (dateStart || dateStart) {
-      filtered = orders.filter(order => isOrderInRange(order, dateStart, dateEnd))
+      filtered = orders.filter((order) =>
+        isOrderInRange(order, dateStart, dateEnd)
+      );
     } else {
       // Par défaut : seulement les dates d'aujourd'hui
       const today = toShortDate(new Date());
-      filtered = orders.filter(order => toShortDate(new Date(order.createdAt)) === today);
+      filtered = orders.filter(
+        (order) => toShortDate(new Date(order.createdAt)) === today
+      );
     }
 
     // Trie par date
@@ -87,7 +91,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     // Efface les anciennes lignes (on garde les 4 premières = headers)
-    while (container.children.length > 4)
+    while (container.children.length > 6)
       container.removeChild(container.lastChild);
 
     //ajouter les commandes
@@ -113,11 +117,36 @@ document.addEventListener("DOMContentLoaded", async () => {
       const divTotal = document.createElement("div");
       divTotal.className = "row";
       divTotal.textContent = order.totalAmount + " FCFA";
+      //QrCode
+      const divQR = document.createElement("div");
+      divQR.className = "row";
+      divQR.title = "QR Code";
+      const btnQR = document.createElement("button");
+      btnQR.textContent = "Voir QR Code";
+      btnQR.onclick = () => {
+        window.open(
+          `/frontend/admin-side/pages/generate-qrcode.html?id=${order._id}`,
+          "_blank"
+        );
+      };
+      divQR.appendChild(btnQR);
+
+      //Paiement
+      const divPay = document.createElement("div");
+      divPay.className = "row";
+      const btnPay = document.createElement("button");
+      btnPay.textContent = "Lancer le paiement";
+      btnPay.onclick = () => {
+        alert("initialisation de paiement pas encore implémenter");
+      };
+      divPay.appendChild(btnPay);
 
       container.appendChild(divTable);
       container.appendChild(divOrder);
       container.appendChild(divTotal);
       container.appendChild(divStatut);
+      container.appendChild(divQR);
+      container.appendChild(divPay);
     }
   }
   //Initialisation
@@ -130,15 +159,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   datePicker.addEventListener("change", (e) => {
     fetchOrders(e.target.value, datePicker.value, dateEndPicker.value);
-  })
-    dateEndPicker.addEventListener("change", () => {
+  });
+  dateEndPicker.addEventListener("change", () => {
     fetchOrders(sortSelect.value, datePicker.value, dateEndPicker.value);
   });
 
-    showTodayBtn.addEventListener("click", () => {
+  showTodayBtn.addEventListener("click", () => {
     datePicker.value = "";
     dateEndPicker.value = "";
-    fetchOrders(sortSelect.value); // affiche seulement aujourd'hui
+    fetchOrders(sortSelect.value, "", ""); // affiche seulement aujourd'hui
   });
 
   document.getElementById("create-order-btn").addEventListener("click", () => {
