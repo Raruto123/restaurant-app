@@ -68,7 +68,14 @@ export async function createOrder(req, res) {
     const { items, table } = req.body;
 
     //On calcule le total
-    const total = items.reduce((sum, { price, qty }) => sum + price * qty, 0);
+    // const total = items.reduce((sum, { price, qty }) => sum + price * qty, 0);
+    const total = items
+      .filter(
+        (item) =>
+          item && typeof item.price === "number" && typeof item.qty === "number"
+      )
+      .reduce((sum, { price, qty }) => sum + price * qty, 0);
+
     //on prend l'id du restaurant depuis ce qu'on a stocké
     const restaurantId = req.restaurant._id;
     // const restaurantId = res.locals.restaurant._id;
@@ -95,12 +102,18 @@ export async function createOrder(req, res) {
     });
   } catch (err) {
     console.error("Erreur createOrder :", err);
-    res.status(400).json({ error: err.message });
+    res
+      .status(400)
+      .json({
+        error: err.message || "Erreur lors de la création de la commande",
+      });
   }
 }
 
 export async function seeDashboardOrders(req, res) {
-  const dashboardOrders = await orderModel.find({restaurant : req.restaurant._id.toString()});
+  const dashboardOrders = await orderModel.find({
+    restaurant: req.restaurant._id.toString(),
+  });
   res.status(200).json(dashboardOrders);
 }
 
@@ -116,12 +129,10 @@ export async function updateOrder(req, res) {
     }
 
     if (order.restaurant.toString() !== req.restaurant._id.toString()) {
-      return res
-        .status(403)
-        .json({
-          error:
-            "Accès refusé cette commande n'appartient pas à votre restaurant",
-        });
+      return res.status(403).json({
+        error:
+          "Accès refusé cette commande n'appartient pas à votre restaurant",
+      });
     }
 
     //on recalcule le total des items modifiés

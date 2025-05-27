@@ -42,6 +42,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const datePicker = document.getElementById("date-picker");
   const dateEndPicker = document.getElementById("date-end-picker");
   const showTodayBtn = document.getElementById("show-btn-today");
+  const modal = document.getElementById("order-modal");
+  const openModal = document.getElementById("create-order-btn");
+  const closeModal = document.getElementById("close-modal");
+  const orderForm = document.getElementById("order-form");
+  const itemsList = document.getElementById("items-list");
 
   //fonction utilitaire pour formater le temps yyyy-mm-dd
   function toShortDate(date) {
@@ -170,7 +175,71 @@ document.addEventListener("DOMContentLoaded", async () => {
     fetchOrders(sortSelect.value, "", ""); // affiche seulement aujourd'hui
   });
 
-  document.getElementById("create-order-btn").addEventListener("click", () => {
-    alert("crée la commande belelou");
-  });
+  //Logique pour toute la modal
+  openModal.onclick = () => {
+    modal.style.display = "flex";
+  };
+  closeModal.onclick = () => {
+    modal.style.display = "none";
+  };
+  //appuyer n'importe où ferme la fenêtre
+  window.onclick = (event) => {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  };
+
+  document.getElementById("add-item").onclick = () => {
+    const itemRow = document.createElement("div");
+    itemRow.className = "item-row";
+    itemRow.innerHTML = `
+    <input type="text" placeholder="Nom du produit" class="item-name" required>
+    <input type="number" placeholder="Quantité" min="1" class="item-qty" required>
+    <input type="number" placeholder="Prix (FCFA)" min="0" class="item-price" required>
+    <button type="button" class="remove-item">Suppr</button>
+  `;
+
+    itemsList.appendChild(itemRow);
+
+    itemRow
+      .querySelector(".remove-item")
+      .addEventListener("click", () => itemRow.remove());
+  };
+  //Créer la commande
+  document
+    .getElementById("submit-button")
+    .addEventListener("click", async (event) => {
+      event.preventDefault();
+      //Récupère table et items
+      const table = document.getElementById("table-number").value;
+      const itemNodes = itemsList.querySelectorAll(".item-row");
+      const items = [...itemNodes].map((row) => ({
+        name: row.querySelector(".item-name").value,
+        price: Number(row.querySelector(".item-price").value),
+        qty: Number(row.querySelector(".item-qty").value),
+      }));
+      console.log(items);
+      //Appeler l'API
+      try {
+        const response = await fetch(baseUrl + "/restaurant/create-order", {
+          credentials: "include",
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items, table }),
+        });
+
+        const data = await response.json();
+        console.log(data);
+        if (response.ok) {
+          modal.style.display = "none";
+          await fetchOrders(sortSelect.value, "", "");
+          table.value="";
+        } else {
+          alert(data.error || "Erreur lors de la création");
+        }
+      } catch (err) {
+        alert("Erreur réseau");
+        console.log(err);
+      }
+    });
 });
