@@ -95,12 +95,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
-    // Efface les anciennes lignes (on garde les 4 premières = headers)
-    while (container.children.length > 6)
+    // Efface les anciennes lignes (on garde les 8 premières = headers)
+    while (container.children.length > 8)
       container.removeChild(container.lastChild);
 
     //ajouter les commandes
     for (const order of filtered) {
+      //Modifier
+      const divModify = document.createElement("div");
+      divModify.className = "row";
+      divModify.title = "Modifier la commande";
+      const btnModify = document.createElement("button");
+      btnModify.className = "btn-modify";
+      btnModify.textContent = "✏️";
+      btnModify.onclick = () => {
+        alert("pas encore implémenter");
+      };
+      divModify.appendChild(btnModify);
       //Table
       const divTable = document.createElement("div");
       divTable.className = "row";
@@ -115,7 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       //Statut
       const divStatut = document.createElement("div");
       divStatut.className =
-        "row" + (order.status === "paid" ? "status-paid" : "status-unpaid");
+        "row " + (order.status === "paid" ? "status-paid" : "status-unpaid");
       divStatut.textContent =
         order.status === "paid" ? "Payé ✅" : "En attente ⌛️";
       //Total
@@ -146,12 +157,50 @@ document.addEventListener("DOMContentLoaded", async () => {
       };
       divPay.appendChild(btnPay);
 
+      //Supprimer
+      const divDelete = document.createElement("div");
+      divDelete.className = "row";
+      divDelete.title = "Supprimer la commande";
+      const btnDelete = document.createElement("button");
+      btnDelete.className = "btn-delete";
+      btnDelete.textContent = "🚮";
+      btnDelete.onclick = async () => {
+        try {
+          const response = await fetch(
+            `${baseUrl}/restaurant/${order._id}/delete`,
+            {
+              credentials: "include",
+              method: "DELETE",
+            }
+          );
+
+          const data = await response.json();
+          if (response.ok) {
+            alert(`${data.message}`);
+            //raffraîchir la liste
+            await fetchOrders(
+              sortSelect.value,
+              datePicker.value,
+              dateEndPicker.value
+            );
+          } else {
+            alert(data.error || "Erreur lors de la suppression");
+          }
+        } catch (err) {
+          alert("Erreur réseau");
+          console.log(err);
+        }
+      };
+      divDelete.appendChild(btnDelete);
+
+      container.appendChild(divModify);
       container.appendChild(divTable);
       container.appendChild(divOrder);
       container.appendChild(divTotal);
       container.appendChild(divStatut);
       container.appendChild(divQR);
       container.appendChild(divPay);
+      container.appendChild(divDelete);
     }
   }
   //Initialisation
@@ -175,7 +224,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     fetchOrders(sortSelect.value, "", ""); // affiche seulement aujourd'hui
   });
 
-  //Logique pour toute la modal
+  //LOGIQUE POUR LA MODAL DE CRÉATION DE COMMANDE
   openModal.onclick = () => {
     modal.style.display = "flex";
   };
@@ -233,7 +282,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (response.ok) {
           modal.style.display = "none";
           await fetchOrders(sortSelect.value, "", "");
-          table.value="";
         } else {
           alert(data.error || "Erreur lors de la création");
         }
