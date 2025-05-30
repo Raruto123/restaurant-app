@@ -42,11 +42,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const datePicker = document.getElementById("date-picker");
   const dateEndPicker = document.getElementById("date-end-picker");
   const showTodayBtn = document.getElementById("show-btn-today");
+  //modal de création de commande
   const modal = document.getElementById("order-modal");
   const openModal = document.getElementById("create-order-btn");
   const closeModal = document.getElementById("close-modal");
-  const orderForm = document.getElementById("order-form");
   const itemsList = document.getElementById("items-list");
+  //modal d'édition de commande
+  const editModal = document.getElementById("order-edit-modal");
+  const closeEditModal = document.getElementById("close-edit-modal");
+  const itemsEditList = document.getElementById("items-edit-list");
+  let editingOrderId = null;
 
   //fonction utilitaire pour formater le temps yyyy-mm-dd
   function toShortDate(date) {
@@ -109,7 +114,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       btnModify.className = "btn-modify";
       btnModify.textContent = "✏️";
       btnModify.onclick = () => {
-        alert("pas encore implémenter");
+        editingOrderId = order._id;
+        console.log(editingOrderId);
+        editModal.style.display = "flex";
+        document.getElementById("table-edit-number").value = order.tableNumber;
+        itemsEditList.innerHTML = "";
+        order.items.forEach((item) => {
+          const itemRow = document.createElement("div");
+          itemRow.className = "item-row";
+          itemRow.innerHTML = `
+      <input type="text" placeholder="Nom du produit" class="item-name" required value="${item.name}">
+      <input type="number" placeholder="Quantité" min="1" class="item-qty" required value="${item.qty}">
+      <input type="number" placeholder="Prix (FCFA)" min="0" class="item-price" required value="${item.price}">
+      <button type="button" class="remove-item">Suppr</button>
+    `;
+          itemRow
+            .querySelector(".remove-item")
+            .addEventListener("click", () => itemRow.remove());
+          itemsEditList.appendChild(itemRow);
+        });
       };
       divModify.appendChild(btnModify);
       //Table
@@ -227,6 +250,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   //LOGIQUE POUR LA MODAL DE CRÉATION DE COMMANDE
   openModal.onclick = () => {
     modal.style.display = "flex";
+    document.getElementById("table-number").value = "";
+    // itemsList.innerHTML=""
   };
   closeModal.onclick = () => {
     modal.style.display = "none";
@@ -247,18 +272,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     <input type="number" placeholder="Prix (FCFA)" min="0" class="item-price" required>
     <button type="button" class="remove-item">Suppr</button>
   `;
-
-    itemsList.appendChild(itemRow);
-
     itemRow
       .querySelector(".remove-item")
       .addEventListener("click", () => itemRow.remove());
+    itemsList.appendChild(itemRow);
   };
   //Créer la commande
   document
     .getElementById("submit-button")
-    .addEventListener("click", async (event) => {
-      event.preventDefault();
+    .addEventListener("click", async () => {
       //Récupère table et items
       const table = document.getElementById("table-number").value;
       const itemNodes = itemsList.querySelectorAll(".item-row");
@@ -270,6 +292,31 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log(items);
       //Appeler l'API
       try {
+        // if (editingOrderId) {
+        //   //on est en mode édition de la commande
+        //   const response = await fetch(
+        //     `${baseUrl}/restaurant/${editingOrderId}/modify`,
+        //     {
+        //       method: "PATCH",
+        //       credentials: "include",
+        //       headers: { "Content-Type": "application/json" },
+        //       body: JSON.stringify({ items, table }),
+        //     }
+        //   );
+        //   const data = await response.json();
+        //   if (response.ok) {
+        //     alert(data.message);
+        //     modal.style.display = "none";
+        //     await fetchOrders(sortSelect.value, "", "");
+        //Vérification du required car required marche seulement avec boutons de type submit dans un form
+        if (
+          !table ||
+          items.length === 0 ||
+          items.some((i) => !i.name || !i.price || !i.qty)
+        ) {
+          alert("Tous les champs sont obligatoires");
+          return;
+        }
         const response = await fetch(baseUrl + "/restaurant/create-order", {
           credentials: "include",
           method: "POST",
@@ -288,6 +335,88 @@ document.addEventListener("DOMContentLoaded", async () => {
       } catch (err) {
         alert("Erreur réseau");
         console.log(err);
+      }
+    });
+
+  //LOGIQUE POUR LA MODAL DE MODIFICATION DE COMMANDE
+  closeEditModal.onclick = () => {
+    editModal.style.display = "none";
+    editingOrderId = null;
+    console.log(editingOrderId);
+  };
+  //appuyer n'importe où ferme la fenêtre
+  window.onclick = (event) => {
+    if (event.target == editModal) {
+      editModal.style.display = "none";
+      editingOrderId = null;
+      console.log(editingOrderId);
+    }
+  };
+
+  document.getElementById("add-edit-item").addEventListener("click", () => {
+    const itemRow = document.createElement("div");
+    itemRow.className = "item-row";
+    itemRow.innerHTML = `
+    <input type="text" placeholder="Nom du produit" class="item-name" required>
+    <input type="number" placeholder="Quantité" min="1" class="item-qty" required>
+    <input type="number" placeholder="Prix (FCFA)" min="0" class="item-price" required>
+    <button type="button" class="remove-item">Suppr</button>
+  `;
+    itemRow
+      .querySelector(".remove-item")
+      .addEventListener("click", () => itemRow.remove());
+    itemsEditList.appendChild(itemRow);
+  });
+
+  document
+    .getElementById("submit-edit-item")
+    .addEventListener("click", async () => {
+      const table = document.getElementById("table-edit-number").value;
+      const itemNodes = itemsEditList.querySelectorAll(".item-row");
+      const items = [...itemNodes].map((row) => ({
+        name: row.querySelector(".item-name").value,
+        price: Number(row.querySelector(".item-price").value),
+        qty: Number(row.querySelector(".item-qty").value),
+      }));
+      // Ici tu peux faire la vérification front "required" si tu veux :
+      if (
+        !table ||
+        items.length === 0 ||
+        items.some((i) => !i.name || !i.price || !i.qty)
+      ) {
+        alert("Tous les champs sont obligatoires !");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${baseUrl}/restaurant/${editingOrderId}/modify`,
+          {
+            method: "PATCH",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items, table }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log(data.order.items)
+          if (table == data.order.tableNumber && items.some((i) => i.name == data.order.items.find((name) => name)||i.price == data.order.items.find((price) => price)||i.qty == data.order.items.find((qty) => qty))) {
+            console.log("same shit")
+            editModal.style.display = "none";
+            await fetchOrders(sortSelect.value, "", "");
+          }
+          alert(data.message);
+          editModal.style.display = "none";
+          await fetchOrders(sortSelect.value, "", "");
+        } else {
+          alert(data.error || "Erreur lors de la modification d'une commande");
+        }
+      } catch (error) {
+        alert("Erreur réseau");
+        console.log(error);
       }
     });
 });

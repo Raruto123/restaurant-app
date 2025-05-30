@@ -45,6 +45,51 @@
       </form>
     </div>
   </div>
+  <!-- Modification de la commande -->
+  <div id="order-edit-modal" class="modal">
+    <div class="modal-content">
+      <span id="close-edit-modal" class="close">&times;</span>
+      <h2>Modifier la commande</h2>
+      <form id="order-edit-form">
+<label>
+        Numéro de table
+      <input
+        type="number"
+        id="table-edit-number"
+        min="1"
+        required
+      />
+      </label>
+      <div id="items-edit-list">
+        <div class="item-row">
+         <input
+          type="text"
+          class="item-name"
+          placeholder="Nom du produit"
+          required
+        />
+        <input
+          type="number"
+          class="item-qty"
+          placeholder="Quantité"
+          min="1"
+          required
+        />
+        <input
+          type="number"
+          class="item-price"
+          placeholder="Prix(FCFA)"
+          min="0"
+          required
+        />
+        </div>
+        </div>
+        <button type="button" id="add-edit-item">Ajouter un produit</button>
+        <button type="button" id="submit-edit-item">Modifier la commande</button>
+      </form>
+      </div>
+    </div>
+  </div>
   <body>
     <div class="dashboard-header">
       <h2>Commandes du jour</h2>

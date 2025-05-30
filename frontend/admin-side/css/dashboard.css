@@ -100,7 +100,7 @@ body {
     display: flex; gap: 8px; margin-bottom: 8px;
 }
 .item-row input { flex: 1; }
-#add-item {
+#add-item, #add-edit-item{
     margin: 10px 0; background: #8ca0ff; color: #fff; border: none; border-radius: 4px; padding: 8px;
     cursor: pointer;
 }
