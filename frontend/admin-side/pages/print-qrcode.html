@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Imprimer la commande</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="/frontend/admin-side/css/print-qrcode.css"
+    />
+  </head>
+  <body>
+    <h2>QRCode de la commande</h2>
+    <div id="qrCode"></div>
+    <button type="button" id="printCode">imprimer le code</button>
+    <script src="/frontend/config.js"></script>
+    <script src="/frontend/admin-side/js/printQrCode.js"></script>
+  </body>
+</html>

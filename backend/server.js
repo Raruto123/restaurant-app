@@ -5,8 +5,8 @@ import dotenv from "dotenv/config";
 import cookieParser from "cookie-parser";
 import runDatabase from "./config/db.js";
 import restaurantRoutes from "./routes/restaurantRoutes.js";
-import orderRoutes from "./routes/orderRoutes.js";
-import { checkUser, requireAuth } from "./middlewares/authMiddleware.js";
+import clientRoutes from "./routes/clientRoutes.js";
+import { checkUser } from "./middlewares/authMiddleware.js";
 
 const app = express();
 const port = process.env.PORT
@@ -37,7 +37,7 @@ app.use(checkUser);
 
 //routes
 app.use("/api/restaurant", restaurantRoutes);
-app.use("/api/client", orderRoutes);
+app.use("/api/client", clientRoutes);
 
 
 // console.log(app._router.stack.map(r => r.route && r.route.path).filter(Boolean))

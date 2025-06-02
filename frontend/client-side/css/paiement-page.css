@@ -49,7 +49,7 @@ body {
     background-color: #218838;
   }
 
-  .paid-message {
+  .alert-message {
     display: none;
     text-align: center;
     color: green;

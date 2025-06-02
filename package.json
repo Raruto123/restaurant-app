@@ -20,6 +20,7 @@
     "jsonwebtoken": "^9.0.2",
     "lygos-sdk": "^1.0.0",
     "mongoose": "^8.14.1",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "uuid": "^11.1.0"
   }
 }

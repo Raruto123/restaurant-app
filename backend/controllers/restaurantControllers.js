@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv/config";
 import LYGOS from "lygos-sdk";
 import QRCode from "qrcode";
+import { v4 as uuidv4 } from "uuid";
 
 const lygos = new LYGOS(process.env.LYGOS_API_KEY);
 
@@ -85,7 +86,7 @@ export async function createOrder(req, res) {
       totalAmount: total,
       restaurant: restaurantId,
       tableNumber: table,
-      qrCodeId: Date.now().toString(),
+      qrCodeId: uuidv4(),
     });
     await newOrder.save();
     //on génère l'url du site qui voit la commande

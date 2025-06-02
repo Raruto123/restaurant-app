@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       btnQR.textContent = "Voir QR Code";
       btnQR.onclick = () => {
         window.open(
-          `/frontend/admin-side/pages/generate-qrcode.html?id=${order._id}`,
+          `/frontend/admin-side/pages/print-qrcode.html?id=${order._id}`,
           "_blank"
         );
       };
@@ -292,23 +292,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log(items);
       //Appeler l'API
       try {
-        // if (editingOrderId) {
-        //   //on est en mode édition de la commande
-        //   const response = await fetch(
-        //     `${baseUrl}/restaurant/${editingOrderId}/modify`,
-        //     {
-        //       method: "PATCH",
-        //       credentials: "include",
-        //       headers: { "Content-Type": "application/json" },
-        //       body: JSON.stringify({ items, table }),
-        //     }
-        //   );
-        //   const data = await response.json();
-        //   if (response.ok) {
-        //     alert(data.message);
-        //     modal.style.display = "none";
-        //     await fetchOrders(sortSelect.value, "", "");
-        //Vérification du required car required marche seulement avec boutons de type submit dans un form
         if (
           !table ||
           items.length === 0 ||
@@ -402,15 +385,29 @@ document.addEventListener("DOMContentLoaded", async () => {
         const data = await response.json();
 
         if (response.ok) {
-          console.log(data.order.items)
-          if (table == data.order.tableNumber && items.some((i) => i.name == data.order.items.find((name) => name)||i.price == data.order.items.find((price) => price)||i.qty == data.order.items.find((qty) => qty))) {
-            console.log("same shit")
+          console.log(data.order.items);
+          if (
+            table == data.order.tableNumber &&
+            items.name == data.order.items.name &&
+            items.price == data.order.items.price &&
+            items.qty == data.order.items.qty
+          ) {
+            console.log("same shit");
             editModal.style.display = "none";
-            await fetchOrders(sortSelect.value, "", "");
+            await fetchOrders(
+              sortSelect.value,
+              datePicker.value,
+              dateEndPicker.value
+            );
+          } else {
+            alert(data.message);
+            editModal.style.display = "none";
+            await fetchOrders(
+              sortSelect.value,
+              datePicker.value,
+              dateEndPicker.value
+            );
           }
-          alert(data.message);
-          editModal.style.display = "none";
-          await fetchOrders(sortSelect.value, "", "");
         } else {
           alert(data.error || "Erreur lors de la modification d'une commande");
         }

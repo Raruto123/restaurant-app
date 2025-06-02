@@ -1,0 +1,25 @@
+@media print {
+  h2, button {
+    display: none;
+  }
+}
+
+@page {
+  size : 5cm 5cm;
+  margin: 0;
+}
+
+
+body {
+  font-family: Arial, sans-serif;
+  padding: 2rem;
+}
+
+button {
+  margin-top: 1rem;
+  padding: 0.6rem 1rem;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}

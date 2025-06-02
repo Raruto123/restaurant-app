@@ -3,26 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <title>Votre addition</title>
-  <link rel="stylesheet" href="/frontend/client-side/css/paiement-age.css">
+  <link rel="stylesheet" href="/frontend/client-side/css/paiement-page.css">
 </head>
 <body>
-
-  <h1>Table 5 - Addition</h1>
+  <!-- Numéro de table -->
+  <h1></h1>
 
   <div class="order-summary">
     <ul id="order-list">
-      <li>Pizza Margherita - 12 000 FCFA</li>
-      <li>Soda - 2 000 FCFA</li>
-      <li>Crème glacée - 3 000 FCFA</li>
     </ul>
-    <div class="total">Total : <span id="total-price">17 000 FCFA</span></div>
+    <div class="total">Total : <span id="total-price"></span></div>
   </div>
 
   <button id="payer-button">Payer maintenant</button>
 
-  <div class="paid-message" id="paidMessage">
-    ✅ Paiement effectué. Merci pour votre visite !
+  <div class="alert-message" id="alertMessage">
+    Le serveur n'a pas encore lancé votre paiement. Réessayez dans quelques minutes.
   </div>
+    <script src="/frontend/config.js"></script>
   <script src="/frontend/client-side/js/paiementPage.mjs" type="module"></script>
 </body>
 </html>
