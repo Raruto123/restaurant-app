@@ -35,7 +35,6 @@ const orderId = urlParams.get("id");
 
 //Appeler L'API pour récupérer la commande
 async function getOrder() {
-  console.log("ssd");
   const response = await fetch(baseUrl + "/restaurant/dashboard-orders", {
     method: "GET",
     credentials: "include",
