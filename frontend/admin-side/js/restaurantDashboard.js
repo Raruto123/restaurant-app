@@ -5,6 +5,10 @@ function decodeId(id) {
   if (id === restaurantId) return "Dashboard de Noom Hôtel";
 }
 
+document.getElementById("stat-button").addEventListener("click", () => {
+  window.open("/frontend/admin-side/pages/statistics-page.html", "_blank")
+})
+
 async function checkAuthOrRedirect() {
   try {
     const response = await fetch(baseUrl + "/restaurant/me", {
@@ -37,6 +41,8 @@ async function checkAuthOrRedirect() {
 checkAuthOrRedirect();
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const paymentsLaunched = new Set();
+
   const container = document.getElementById("container");
   const sortSelect = document.getElementById("sort-select");
   const datePicker = document.getElementById("date-picker");
@@ -65,6 +71,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     return (
       (!dateDebut || created >= dateDebut) && (!dateFin || created <= dateFin)
     );
+  }
+  // Fonction pour faire du polling du statut de paiement d'une commande
+  function retrievePaymentStatus(orderId, divStatut) {
+    // Stoppe le polling si déjà payé (on garde la référence pour pouvoir clear si besoin)
+    let interval = setInterval(async () => {
+      try {
+        const response = await fetch(
+          `${baseUrl}/restaurant/${orderId}/status`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+        const data = await response.json();
+        // Si statut payé, met à jour l'affichage et arrête l'intervalle
+        if (data.status === "paid" || data.lygosStatus === "completed") {
+          divStatut.textContent = "Payé ✅";
+          divStatut.className = "row status-paid";
+          clearInterval(interval);
+          // Tu peux aussi rafraîchir la liste des commandes ici si tu veux
+          // await fetchOrders(sortSelect.value, datePicker.value, dateEndPicker.value);
+        }
+      } catch (err) {
+        console.log("Erreur dans le polling paiement :", err);
+      }
+    }, 5000);
   }
 
   async function fetchOrders(sort = "oldest", dateStart, dateEnd) {
@@ -148,10 +180,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       //Statut
       const divStatut = document.createElement("div");
-      divStatut.className =
-        "row " + (order.status === "paid" ? "status-paid" : "status-unpaid");
-      divStatut.textContent =
-        order.status === "paid" ? "Payé ✅" : "En attente ⌛️";
+      if (order.status === "paid") {
+        divStatut.textContent = "Payé ✅";
+        divStatut.className = "row status-paid";
+        btnPay.textContent = "Commande Terminée";
+      } else {
+        divStatut.textContent = "En attente ⌛️";
+        divStatut.className = "row status-unpaid";
+        retrievePaymentStatus(order._id, divStatut);
+      }
+      // divStatut.className =
+      //   "row " + (order.status === "paid" ? "status-paid" : "status-unpaid");
+      // divStatut.textContent =
+      //   order.status === "paid" ? "Payé ✅" : "En attente ⌛️";
       //Total
       const divTotal = document.createElement("div");
       divTotal.className = "row";
@@ -175,8 +216,59 @@ document.addEventListener("DOMContentLoaded", async () => {
       divPay.className = "row";
       const btnPay = document.createElement("button");
       btnPay.textContent = "Lancer le paiement";
-      btnPay.onclick = () => {
-        alert("initialisation de paiement pas encore implémenter");
+      // S'assurer que la clé est unique par commande
+
+      const paymentKey = "pay-" + order._id;
+      // Si le paiement est déjà lancé (front)
+      if (order.payment_url || paymentsLaunched.has(paymentKey)) {
+        btnPay.textContent = "Paiement lancé";
+        btnPay.disabled = false;
+        btnModify.disabled = true;
+        btnModify.textContent="❌"
+      } else {
+        btnPay.textContent = "Lancer le paiement";
+      }
+      btnPay.onclick = async () => {
+        // Empêche le relancement si déjà lancé
+        if (order.payment_url) {
+          alert("Paiement déjà lancé. Le client peut maintenant payer.");
+          return;
+        }
+        // Lancer la requête PATCH
+        try {
+          btnPay.disabled = true;
+          btnPay.textContent = "Lancement...";
+          const response = await fetch(
+            `${baseUrl}/restaurant/${order._id}/pay`,
+            {
+              credentials: "include",
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          const data = await response.json();
+
+          if (response.ok && data.payment_url) {
+            console.log(data);
+            btnPay.textContent = "Paiement lancé";
+            paymentsLaunched.add(paymentKey);
+            // Tu peux stocker data.payment_url si tu veux l’afficher quelque part
+            alert(
+              "Le paiement a bien été lancé ! Le client peut maintenant payer."
+            );
+          } else {
+            btnPay.textContent = "Lancer le paiement";
+            btnPay.disabled = false;
+            alert(data.error || "Erreur lors du lancement du paiement");
+          }
+        } catch (err) {
+          btnPay.textContent = "Lancer le paiement";
+          btnPay.disabled = false;
+          alert(err || "Erreur réseau !");
+        }
       };
       divPay.appendChild(btnPay);
 
@@ -235,7 +327,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   datePicker.addEventListener("change", (e) => {
-    fetchOrders(e.target.value, datePicker.value, dateEndPicker.value);
+    fetchOrders(sortSelect.value, datePicker.value, dateEndPicker.value);
   });
   dateEndPicker.addEventListener("change", () => {
     fetchOrders(sortSelect.value, datePicker.value, dateEndPicker.value);

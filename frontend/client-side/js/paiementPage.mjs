@@ -13,7 +13,9 @@ async function displayOrder() {
     });
 
     if (!response.ok) {
-        alert("Vous êtes sur un mauvais lien. Veuillez scanner correctement le code QR ou demander au serveur de réimprimer le code.")
+      alert(
+        "Vous êtes sur un mauvais lien. Veuillez scanner correctement le code QR ou demander au serveur de réimprimer le code."
+      );
     }
 
     const order = await response.json();
@@ -34,8 +36,7 @@ async function displayOrder() {
       "total-price"
     ).textContent = `${order.totalAmount} FCFA`;
   } catch (err) {
-    document.getElementById("alertMessage").textContent =
-      "Erreur réseau";
+    document.getElementById("alertMessage").textContent = "Erreur réseau";
     document.getElementById("alertMessage").style.display = "block";
     document.getElementById("payer-button").style.display = "none";
   }
@@ -53,23 +54,22 @@ async function verifyPaymentLink() {
       }
     );
     const data = await response.json();
+    console.log(data.status);
 
-    if (!response.ok) {
-        console.log("not ok")
+    if (response.ok && (data.status === 404 || data.status === 422)) {
       document.getElementById("alertMessage").textContent =
-        "Vous êtes sur le bon lien. Mais le serveur n'a pas encore lancé votre paiement. Veuillez patienter";
+        "Vous êtes sur le bon lien. Mais le serveur n'a pas encore lancé votre paiement. Veuillez patienter"
       document.getElementById("alertMessage").style.display = "block";
       document.getElementById("payer-button").style.display = "none";
+    } else {
+     // Affiche le bouton si le paiement est prêt
+      document.getElementById("alertMessage").style.display = "none";
+      document.getElementById("payer-button").style.display = "block";
+      payButton.addEventListener("click", () => {
+        window.location.href = "https://www.google.com";
+      });
     }
 
-    // Affiche le bouton si le paiement est prêt
-    document.getElementById("alertMessage").style.display = "none";
-    document.getElementById("payer-button").style.display = "block";
-    console.log("response is ok")
-
-    payButton.addEventListener("click", () => {
-      window.location.href = "https://www.google.com";
-    });
   } catch (err) {
     document.getElementById("alertMessage").style.display = "block";
     document.getElementById("payer-button").style.display = "none";

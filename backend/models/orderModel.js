@@ -30,9 +30,10 @@ const orderSchema = new mongoose.Schema({
         required : true,
         unique : true
     },
-    // qrCodeUrl : {
-    //     type : String
-    // }
+    payment_url : {
+        type : String,
+        default : null
+    }
 }, {timestamps : true}
 )
 

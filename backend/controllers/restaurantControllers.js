@@ -208,6 +208,8 @@ export async function payOrder(req, res) {
         .json({ error: `voici l'erreur => ${response.error}` });
     }
 
+    order.payment_url = response.link;
+    await order.save();
     //Retourner l'url de paiement
     return res.status(200).json({
       payment_url: response.link,

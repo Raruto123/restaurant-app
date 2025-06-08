@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr-CI">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="/frontend/admin-side/css/statistics-page.css"
+    />
+    <!-- Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+    <!-- FileSaver pour l'export en format CSV -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+    <title>Statistiques</title>
+  </head>
+  <body>
+    <header>
+      <h1>Statistiques de votre Restaurant</h1>
+      <nav>
+        <button class="tab active" data-tab="orders">Commandes</button>
+        <button class="tab" data-tab="products">Produits</button>
+        <button class="tab" data-tab="payments">Paiements</button>
+        <button class="tab" data-tab="tables">Tables</button>
+      </nav>
+    </header>
+    <main>
+      <!-- Statistiques Commandes -->
+      <section id="orders-stats" class="stats-section active">
+        <h2>Statistiques de commandes</h2>
+        <div class="kpi-container">
+          <div class="kpi">
+            <div class="kpi-label">Nombre total de commandes</div>
+            <div class="kpi-value" id="total-orders">-</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">CA total généré</div>
+            <div class="kpi-value" id="total-ca">-</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Ticket moyen</div>
+            <div class="kpi-value" id="avg-ticket">-</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Payées/Impayées</div>
+            <div class="kpi-value" id="paid-vs-unpaid"></div>
+          </div>
+        </div>
+        <div class="filters">
+          <label>Filtrer par :</label>
+          <input type="date" id="date-start" />
+          <input type="date" id="date-end" />
+          <button id="filter-btn">Appliquer</button>
+          <button id="export-btn">Exporter (CSV)</button>
+        </div>
+        <canvas id="orders-chart" style="height: 80;"></canvas>
+      </section>
+      <!-- Section à venir (masquées pour l'instant)-->
+      <section id="product-stats" class="product-section">À venir...</section>
+      <section id="payments-stats" class="payments-section">À venir...</section>
+      <section id="tables-stats" class="tables-section">À venir...</section>
+    </main>
+    <script src="/frontend/config.js"></script>
+    <script src="/frontend/admin-side/js/statisticsPage.js"></script>
+  </body>
+</html>

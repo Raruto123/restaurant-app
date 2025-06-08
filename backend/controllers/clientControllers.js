@@ -10,6 +10,7 @@ export async function seeOrder(req, res) {
   res.status(200).json(order);
 }
 
+//À REVOIR QUAND TU AURAS FAIS VERIFIER TON COMPTE LYGOS
 export async function getPaymentDetails(req, res) {
   const orderId = req.params.id;
   try {
@@ -19,7 +20,7 @@ export async function getPaymentDetails(req, res) {
     const orderDetails = await lygos.getPayment(order.qrCodeId);
     if (!orderDetails) throw new Error("Aucun paiement initié avec cette id");
 
-    res.status(200).json(Object.values(orderDetails));
+    res.status(200).json(orderDetails);
   } catch (err) {
     console.error("Error in getPaymentDetails :", err);
     return res.status(500).json({ err });
