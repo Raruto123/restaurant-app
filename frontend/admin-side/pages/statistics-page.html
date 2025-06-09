@@ -10,7 +10,7 @@
     <!-- Chart.js pour les graphiques -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
     <!-- FileSaver pour l'export en format CSV -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <title>Statistiques</title>
   </head>
   <body>
@@ -49,13 +49,53 @@
           <label>Filtrer par :</label>
           <input type="date" id="date-start" />
           <input type="date" id="date-end" />
-          <button id="filter-btn">Appliquer</button>
+          <button id="filter-btn">Appliquer filtre</button>
           <button id="export-btn">Exporter (CSV)</button>
         </div>
-        <canvas id="orders-chart" style="height: 80;"></canvas>
+        <canvas id="orders-chart" style="height: 80"></canvas>
       </section>
+      <!-- Statistiques sur les produits -->
+      <section id="product-stats" class="stats-section">
+        <h2>Statistiques sur les produits</h2>
+        <div class="filters">
+          <label>Filtrer par :</label>
+          <input type="date" id="prod-date-start" />
+          <input type="date" id="prod-date-end" />
+          <button id="prod-filter-btn">Appliquer filtre</button>
+          <button id="prod-export-btn">Exporter (CSV)</button>
+        </div>
+        <div class="kpi-container">
+          <div class="kpi">
+            <div class="kpi-label">Produit le plus vendu</div>
+            <div class="kpi-value" id="top-product">-</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Nombre total de produits vendus</div>
+            <div class="kpi-value" id="total-products-sold"></div>
+          </div>
+          <div class="kpi">
+            <!-- chiffre d'affaire généré par le seul produit -->
+            <div class="kpi-label">CA généré (produits)</div>
+            <div class="kpi-value" id="products-total-ca"></div>
+          </div>
+        </div>
+        <canvas id="product-bar-chart" height="90"></canvas>
+        <canvas id="product-pie-chart" height="70"></canvas>
+        <div>
+          <table id="products-table">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Quantité vendue</th>
+                <th>CA généré</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
       <!-- Section à venir (masquées pour l'instant)-->
-      <section id="product-stats" class="product-section">À venir...</section>
       <section id="payments-stats" class="payments-section">À venir...</section>
       <section id="tables-stats" class="tables-section">À venir...</section>
     </main>

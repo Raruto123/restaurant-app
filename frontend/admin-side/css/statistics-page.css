@@ -106,3 +106,25 @@ main {
         gap: 0.6rem;
     }
 }
+
+
+/*section produits */
+
+#products-table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+    font-size: 1rem;
+}
+#products-table th, #products-table td {
+    padding: 8px 14px;
+    border: 1px solid #eee;
+    text-align: center;
+}
+#products-table th {
+    background: #6372e9;
+    color: #fff;
+}
+#products-table tbody tr:nth-child(even) {
+    background: #f2f5ff;
+}
