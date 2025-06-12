@@ -94,10 +94,92 @@
           </table>
         </div>
       </section>
-
-      <!-- Section à venir (masquées pour l'instant)-->
-      <section id="payments-stats" class="payments-section">À venir...</section>
-      <section id="tables-stats" class="tables-section">À venir...</section>
+      <!-- Statistiques sur les paiements -->
+      <section id="payments-stats" class="stats-section">
+        <h2>Statistiques sur les paiements par l'application</h2>
+        <div class="kpi-container">
+          <div class="kpi">
+            <div class="kpi-label">Total payé</div>
+            <div class="kpi-value" id="total-paid">-</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Total en attente</div>
+            <div class="kpi-value" id="total-unpaid">-</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Taux de paiement</div>
+            <div class="kpi-value" id="payment-rate">-</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Montant moyen payé</div>
+            <div class="kpi-value" id="avg-paid">-</div>
+          </div>
+        </div>
+        <div class="filters">
+          <label>Filtrer par :</label>
+          <input type="date" id="pay-date-start" />
+          <input type="date" id="pay-date-end" />
+          <button id="pay-filter-btn">Appliquer filtre</button>
+          <button id="pay-export-btn">Exporter (CSV)</button>
+        </div>
+        <canvas id="payments-bar-chart" height="80"></canvas>
+        <canvas id="payments-pie-chart" height="60"></canvas>
+        <div>
+          <table id="payments-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th>Table</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+      <!-- Statistiques sur les tables-->
+      <section id="tables-stats" class="stats-section">
+        <h2>Statistiques sur les tables</h2>
+        <div class="kpi-container">
+          <div class="kpi">
+            <div class="kpi-label">Tables utilisées</div>
+            <div class="kpi-value" id="unique-tables">-</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Table la plus sollicitée</div>
+            <div class="kpi-value" id="top-table">-</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Commandes moyennes par table</div>
+            <div class="kpi-value" id="avg-orders-table">-</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">CA par table (moyen)</div>
+            <div class="kpi-value" id="avg-ca-table">-</div>
+          </div>
+        </div>
+        <div class="filters">
+          <label>Filtrer par :</label>
+          <input type="date" id="tables-date-start" />
+          <input type="date" id="tables-date-end" />
+          <button id="tables-filter-btn">Appliquer filtre</button>
+          <button id="tables-export-btn">Exporter (CSV)</button>
+        </div>
+        <canvas id="tables-bar-chart" height="90"></canvas>
+        <div>
+          <table id="tables-table">
+            <thead>
+              <tr>
+                <th>Table</th>
+                <th>Nb commandes</th>
+                <th>CA généré</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
     </main>
     <script src="/frontend/config.js"></script>
     <script src="/frontend/admin-side/js/statisticsPage.js"></script>

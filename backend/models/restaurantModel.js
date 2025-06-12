@@ -12,6 +12,10 @@ const restaurantSchema = new mongoose.Schema({
         type : String,
         required : true
     },
+    lygosApiKey : {
+        type : String,
+        required : false
+    }
 },     {timestamps : true}
 )
 

@@ -128,3 +128,44 @@ main {
 #products-table tbody tr:nth-child(even) {
     background: #f2f5ff;
 }
+
+/*section payments */
+
+#payments-table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+    font-size: 1rem;
+}
+#payments-table th, #payments-table td {
+    padding: 8px 14px;
+    border: 1px solid #eee;
+    text-align: center;
+}
+#payments-table th {
+    background: #6372e9;
+    color: #fff;
+}
+#payments-table tbody tr:nth-child(even) {
+    background: #f2f5ff;
+}
+
+/*section tables */
+#tables-table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+    font-size: 1rem;
+}
+#tables-table th, #tables-table td {
+    padding: 8px 14px;
+    border: 1px solid #eee;
+    text-align: center;
+}
+#tables-table th {
+    background: #6372e9;
+    color: #fff;
+}
+#tables-table tbody tr:nth-child(even) {
+    background: #f2f5ff;
+}

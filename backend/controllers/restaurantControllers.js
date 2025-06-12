@@ -6,7 +6,7 @@ import LYGOS from "lygos-sdk";
 import QRCode from "qrcode";
 import { v4 as uuidv4 } from "uuid";
 
-const lygos = new LYGOS(process.env.LYGOS_API_KEY);
+// const lygos = new LYGOS(process.env.LYGOS_API_KEY);
 
 //créer un restaurant
 export async function createRestaurant(req, res) {
@@ -103,11 +103,9 @@ export async function createOrder(req, res) {
     });
   } catch (err) {
     console.error("Erreur createOrder :", err);
-    res
-      .status(400)
-      .json({
-        error: err.message || "Erreur lors de la création de la commande",
-      });
+    res.status(400).json({
+      error: err.message || "Erreur lors de la création de la commande",
+    });
   }
 }
 
@@ -182,6 +180,16 @@ export async function deleteOrder(req, res) {
  */
 export async function payOrder(req, res) {
   try {
+    // Récupère le restaurant (via req.restaurant qui est set par ton middleware)
+    const restaurant = req.restaurant; // assure-toi qu'il est bien peuplé ici
+
+    if (!restaurant.lygosApiKey) {
+      return res
+        .status(400)
+        .json({ error: "Clé API LYGOS non configurée pour ce restaurant" });
+    }
+
+    const lygos = new LYGOS(restaurant.lygosApiKey);
     // 2. Récupérer la commande
     const order = await orderModel.findById(req.params.id);
     if (!order) {
@@ -291,6 +299,16 @@ export async function payOrder(req, res) {
 
 export async function checkOrderStatus(req, res) {
   try {
+    // Récupère le restaurant (via req.restaurant qui est set par ton middleware)
+    const restaurant = req.restaurant; // assure-toi qu'il est bien peuplé ici
+
+    if (!restaurant.lygosApiKey) {
+      return res
+        .status(400)
+        .json({ error: "Clé API LYGOS non configurée pour ce restaurant" });
+    }
+
+    const lygos = new LYGOS(restaurant.lygosApiKey);
     const order = await orderModel.findById(req.params.id);
     if (!order) throw new Error("This order doesn't exist");
 
