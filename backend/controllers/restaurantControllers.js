@@ -5,6 +5,7 @@ import dotenv from "dotenv/config";
 import LYGOS from "lygos-sdk";
 import QRCode from "qrcode";
 import { v4 as uuidv4 } from "uuid";
+import Cinetpay from "cinetpay-node-sdk";
 
 // const lygos = new LYGOS(process.env.LYGOS_API_KEY);
 
@@ -231,6 +232,107 @@ export async function payOrder(req, res) {
   }
 }
 
+export async function checkOrderStatus(req, res) {
+  try {
+    // Récupère le restaurant (via req.restaurant qui est set par ton middleware)
+    const restaurant = req.restaurant; // assure-toi qu'il est bien peuplé ici
+
+    if (!restaurant.lygosApiKey) {
+      return res
+        .status(400)
+        .json({ error: "Clé API LYGOS non configurée pour ce restaurant" });
+    }
+
+    const lygos = new LYGOS(restaurant.lygosApiKey);
+    const order = await orderModel.findById(req.params.id);
+    if (!order) throw new Error("This order doesn't exist");
+
+    const result = await lygos.paymentStatus(order.qrCodeId);
+    if (!result) throw new Error("Aucun paiement initié avec cette id");
+
+    // const payments = await lygos.listOfPayment();
+    // // console.log(payments);
+
+    if (result.status === "completed") {
+      order.status = "paid";
+      await order.save();
+    } else if (result.status === "accepted") {
+      console.log("En attente du paiement de la commande :", result.order_id);
+    } else if (result.status === "failed") {
+      console.log("Erreur de la commande :", result.order_id);
+    }
+
+    return res.status(200).json({
+      orderId: order._id,
+      status: order.status,
+      lygosStatus: result.status,
+      lygosResultKeys: Object.keys(result),
+      lygosResultValues: Object.values(result),
+    });
+  } catch (err) {
+    console.error("Error in checkOrderStatus :", err);
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+/////////////////////CINETPAY\\\\\\\\\\\\\\\\\\\\\\\
+export async function payOrderCinetpay(req, res) {
+  try {
+    //Récupérer le restaurant
+    const restaurant = req.restaurant;
+
+    if (!restaurant.cinetpayApiKey || !restaurant.cinetpaySiteID) {
+      return res
+        .status(400)
+        .json({ error: "Clé Cinetpay non configurée pour ce restaurant" });
+    }
+    const cinetpay = new Cinetpay(
+      restaurant.cinetpayApiKey,
+      restaurant.cinetpaySiteID
+    );
+    //Récupérer la commande
+    const order = await orderModel.findById(req.params.id);
+    if (!order) return res.status(400).json({ error: "Commande introuvable" });
+    //Construire le paymentData
+    const paymentData = {
+      transaction_id: order.qrCodeId, //identifiant unique de la transaction
+      amount: order.totalAmount, //prix de la transaction
+      currency: "XOF",
+      description: "Paiement de votre addition",
+      notify_url: "https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672",
+      // return_url: "https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672",
+      return_url : "http://127.0.0.1:3000/frontend/client-side/pages/paiement-page.html",
+      channels: "ALL",
+    };
+
+    //Appeler Cinetpay
+    const response = await cinetpay.initiatePayment(paymentData);
+
+
+    if (response.code === "201") {
+      //201 = succès
+      order.payment_url = response.data.payment_url;
+      await order.save();
+      //retourner l'url de paiement
+      return res.status(200).json({
+        success_code: response.code,
+        message: response.message,
+        description: response.description,
+        payment_url: response.data.payment_url,
+        payment_token: response.data.payment_token,
+      });
+    } else {
+      return res.status(400).json({
+        error_code: response.code,
+        error: response.message,
+        description: response.description,
+      });
+    }
+  } catch (err) {
+    console.error("Error in payOrder:", err);
+    return res.status(500).json({ error: "Erreur réseau" });
+  }
+}
 // export async function notifyPayment(req, res) {
 //   try {
 //         // 1) Récupérer le token et les données envoyées
@@ -296,46 +398,3 @@ export async function payOrder(req, res) {
 //   }
 
 // }
-
-export async function checkOrderStatus(req, res) {
-  try {
-    // Récupère le restaurant (via req.restaurant qui est set par ton middleware)
-    const restaurant = req.restaurant; // assure-toi qu'il est bien peuplé ici
-
-    if (!restaurant.lygosApiKey) {
-      return res
-        .status(400)
-        .json({ error: "Clé API LYGOS non configurée pour ce restaurant" });
-    }
-
-    const lygos = new LYGOS(restaurant.lygosApiKey);
-    const order = await orderModel.findById(req.params.id);
-    if (!order) throw new Error("This order doesn't exist");
-
-    const result = await lygos.paymentStatus(order.qrCodeId);
-    if (!result) throw new Error("Aucun paiement initié avec cette id");
-
-    // const payments = await lygos.listOfPayment();
-    // // console.log(payments);
-
-    if (result.status === "completed") {
-      order.status = "paid";
-      await order.save();
-    } else if (result.status === "accepted") {
-      console.log("En attente du paiement de la commande :", result.order_id);
-    } else if (result.status === "failed") {
-      console.log("Erreur de la commande :", result.order_id);
-    }
-
-    return res.status(200).json({
-      orderId: order._id,
-      status: order.status,
-      lygosStatus: result.status,
-      lygosResultKeys: Object.keys(result),
-      lygosResultValues: Object.values(result),
-    });
-  } catch (err) {
-    console.error("Error in checkOrderStatus :", err);
-    return res.status(500).json({ error: err.message });
-  }
-}

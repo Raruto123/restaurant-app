@@ -15,6 +15,18 @@ const restaurantSchema = new mongoose.Schema({
     lygosApiKey : {
         type : String,
         required : false
+    },
+    cinetpayApiKey : {
+        type : String,
+        required : false
+    },
+    cinetpaySiteID : {
+        type : String,
+        required : false
+    },
+    cinetpaySecretKey : {
+        type : String,
+        required : false
     }
 },     {timestamps : true}
 )

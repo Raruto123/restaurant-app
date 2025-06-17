@@ -1,6 +1,6 @@
 import { Router } from "express";
 const router = Router();
-import { checkOrderStatus, createOrder, createRestaurant, deleteOrder, getAllRestaurants, login, payOrder, seeDashboardOrders, updateOrder } from "../controllers/restaurantControllers.js";
+import { checkOrderStatus, createOrder, createRestaurant, deleteOrder, getAllRestaurants, login, payOrder, payOrderCinetpay, seeDashboardOrders, updateOrder } from "../controllers/restaurantControllers.js";
 import { checkAuth, checkUser, requireAuth } from "../middlewares/authMiddleware.js";
 
 //créer restaurant (seul moi peut le faire)
@@ -24,6 +24,7 @@ router.patch("/:id/modify", requireAuth, checkUser, updateOrder);
 
 router.delete('/:id/delete', requireAuth, checkUser, deleteOrder);
 
+///////////////////////LYGOS\\\\\\\\\\\\\
 // pour initaliser le paiement quand on envoie le code qr qui contiendra le payment_url
 router.patch("/:id/pay", requireAuth, payOrder);
 //pour confirmer au près de l'api de lygos que la commande a été payé et changé le status de la commande
@@ -31,6 +32,11 @@ router.patch("/:id/pay", requireAuth, payOrder);
 
 // //pour confirmer par le client
 router.get("/:id/status", requireAuth, checkOrderStatus);
+
+
+/////////////////////CINETPAY\\\\\\\\\\\\\\\\\\\\\\\
+// pour initaliser le paiement quand on envoie le code qr qui contiendra le payment_url
+router.post("/:id/cinetpay/pay", requireAuth, payOrderCinetpay);
 
 //générer ou récupérer un code qr
 // router.get("/:id/qr", getCodeQr)
