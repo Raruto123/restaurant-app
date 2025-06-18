@@ -6,8 +6,8 @@ function decodeId(id) {
 }
 
 document.getElementById("stat-button").addEventListener("click", () => {
-  window.open("/frontend/admin-side/pages/statistics-page.html", "_blank")
-})
+  window.open("/frontend/admin-side/pages/statistics-page.html", "_blank");
+});
 
 async function checkAuthOrRedirect() {
   try {
@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let interval = setInterval(async () => {
       try {
         const response = await fetch(
-          `${baseUrl}/restaurant/${orderId}/status`,
+          `${baseUrl}/restaurant/${orderId}/cinetpay/status`,
           {
             method: "GET",
             credentials: "include",
@@ -86,12 +86,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         );
         const data = await response.json();
         // Si statut payé, met à jour l'affichage et arrête l'intervalle
-        if (data.status === "paid" || data.lygosStatus === "completed") {
+        if (data.orderStatus === "paid" || data.cinetpayStatus === "ACCEPTED") {
           divStatut.textContent = "Payé ✅";
           divStatut.className = "row status-paid";
           clearInterval(interval);
           // Tu peux aussi rafraîchir la liste des commandes ici si tu veux
           // await fetchOrders(sortSelect.value, datePicker.value, dateEndPicker.value);
+        } else if (
+          data.orderStatus === "failed" ||
+          data.cinetpayStatus === "REFUSED"
+        ) {
+          divStatut.textContent = "Échec 🚫";
+          divStatut.className = "row status-unpaid";
+          clearInterval(interval);
         }
       } catch (err) {
         console.log("Erreur dans le polling paiement :", err);
@@ -180,19 +187,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       //Statut
       const divStatut = document.createElement("div");
-      if (order.status === "paid") {
-        divStatut.textContent = "Payé ✅";
-        divStatut.className = "row status-paid";
-        btnPay.textContent = "Commande Terminée";
-      } else {
-        divStatut.textContent = "En attente ⌛️";
-        divStatut.className = "row status-unpaid";
-        retrievePaymentStatus(order._id, divStatut);
-      }
-      // divStatut.className =
-      //   "row " + (order.status === "paid" ? "status-paid" : "status-unpaid");
-      // divStatut.textContent =
-      //   order.status === "paid" ? "Payé ✅" : "En attente ⌛️";
       //Total
       const divTotal = document.createElement("div");
       divTotal.className = "row";
@@ -215,61 +209,89 @@ document.addEventListener("DOMContentLoaded", async () => {
       const divPay = document.createElement("div");
       divPay.className = "row";
       const btnPay = document.createElement("button");
-      btnPay.textContent = "Lancer le paiement";
-      // S'assurer que la clé est unique par commande
-
-      const paymentKey = "pay-" + order._id;
-      // Si le paiement est déjà lancé (front)
-      if (order.payment_url || paymentsLaunched.has(paymentKey)) {
-        btnPay.textContent = "Paiement lancé";
-        btnPay.disabled = false;
+      if (order.status === "paid") {
+        divStatut.textContent = "Payé ✅";
+        divStatut.className = "row status-paid";
+        btnPay.textContent = "Commande Terminée";
+        btnPay.disabled = true;
         btnModify.disabled = true;
-        btnModify.textContent="❌"
+        btnModify.textContent = "❌";
+      } else if (order.status === "failed") {
+        divStatut.textContent = "Échec 🚫";
+        divStatut.className = "row status-unpaid";
+        btnPay.textContent = "Commande Terminée";
+                btnPay.disabled = true;
+        btnModify.disabled = true;
+        btnModify.textContent = "❌";
       } else {
+        divStatut.textContent = "En attente ⌛️";
+        divStatut.className = "row status-unpaid";
         btnPay.textContent = "Lancer le paiement";
-      }
-      btnPay.onclick = async () => {
-        // Empêche le relancement si déjà lancé
-        if (order.payment_url) {
-          alert("Paiement déjà lancé. Le client peut maintenant payer.");
-          return;
-        }
-        // Lancer la requête PATCH
-        try {
+        // S'assurer que la clé est unique par commande
+
+        const paymentKey = "pay-" + order._id;
+        // Si le paiement est déjà lancé (front)
+        if (order.payment_url !== null || paymentsLaunched.has(paymentKey)) {
+          btnPay.textContent = "Paiement lancé";
           btnPay.disabled = true;
-          btnPay.textContent = "Lancement...";
-          const response = await fetch(
-            `${baseUrl}/restaurant/${order._id}/pay`,
-            {
-              credentials: "include",
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          const data = await response.json();
-
-          if (response.ok && data.payment_url) {
-            console.log(data);
-            btnPay.textContent = "Paiement lancé";
-            paymentsLaunched.add(paymentKey);
-            // Tu peux stocker data.payment_url si tu veux l’afficher quelque part
-            alert(
-              "Le paiement a bien été lancé ! Le client peut maintenant payer."
+          btnModify.disabled = true;
+          btnModify.textContent = "❌";
+        } else {
+          btnPay.textContent = "Lancer le paiement";
+        }
+        btnPay.onclick = async () => {
+          // Empêche le relancement si déjà lancé
+          if (order.payment_url) {
+            alert("Paiement déjà lancé. Le client peut maintenant payer.");
+            return;
+          }
+          // Lancer la requête POST
+          try {
+            btnPay.disabled = true;
+            btnPay.textContent = "Lancement...";
+            btnModify.disabled = true;
+            btnModify.textContent = "❌";
+            const response = await fetch(
+              `${baseUrl}/restaurant/${order._id}/cinetpay/pay`,
+              {
+                credentials: "include",
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
             );
-          } else {
+
+            const data = await response.json();
+
+            if (response.ok && data.payment_url) {
+              console.log(data);
+              btnPay.textContent = "Paiement lancé";
+              paymentsLaunched.add(paymentKey);
+              // Tu peux stocker data.payment_url si tu veux l’afficher quelque part
+              alert(
+                "Le paiement a bien été lancé ! Le client peut maintenant payer."
+              );
+              // Rafraîchir toute la liste pour MAJ boutons et état de la commande
+
+              await fetchOrders(
+                sortSelect.value,
+                datePicker.value,
+                dateEndPicker.value
+              );
+            } else {
+              btnPay.textContent = "Lancer le paiement";
+              btnPay.disabled = false;
+              alert(data.error || "Erreur lors du lancement du paiement");
+            }
+          } catch (err) {
             btnPay.textContent = "Lancer le paiement";
             btnPay.disabled = false;
-            alert(data.error || "Erreur lors du lancement du paiement");
+            alert(err || "Erreur réseau !");
           }
-        } catch (err) {
-          btnPay.textContent = "Lancer le paiement";
-          btnPay.disabled = false;
-          alert(err || "Erreur réseau !");
-        }
-      };
+        };
+        retrievePaymentStatus(order._id, divStatut);
+      }
       divPay.appendChild(btnPay);
 
       //Supprimer

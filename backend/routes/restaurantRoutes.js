@@ -1,6 +1,6 @@
 import { Router } from "express";
 const router = Router();
-import { checkOrderStatus, createOrder, createRestaurant, deleteOrder, getAllRestaurants, login, payOrder, payOrderCinetpay, seeDashboardOrders, updateOrder } from "../controllers/restaurantControllers.js";
+import { checkOrderStatus, checkOrderStatusCinetpay, createOrder, createRestaurant, deleteOrder, getAllRestaurants, login, payOrder, payOrderCinetpay, seeDashboardOrders, updateOrder } from "../controllers/restaurantControllers.js";
 import { checkAuth, checkUser, requireAuth } from "../middlewares/authMiddleware.js";
 
 //créer restaurant (seul moi peut le faire)
@@ -37,6 +37,11 @@ router.get("/:id/status", requireAuth, checkOrderStatus);
 /////////////////////CINETPAY\\\\\\\\\\\\\\\\\\\\\\\
 // pour initaliser le paiement quand on envoie le code qr qui contiendra le payment_url
 router.post("/:id/cinetpay/pay", requireAuth, payOrderCinetpay);
+
+
+//pour confirmer le statut de la commande dans le dashboard
+router.get("/:id/cinetpay/status", requireAuth, checkOrderStatusCinetpay);
+
 
 //générer ou récupérer un code qr
 // router.get("/:id/qr", getCodeQr)

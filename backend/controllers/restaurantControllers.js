@@ -284,7 +284,7 @@ export async function payOrderCinetpay(req, res) {
     if (!restaurant.cinetpayApiKey || !restaurant.cinetpaySiteID) {
       return res
         .status(400)
-        .json({ error: "Clé Cinetpay non configurée pour ce restaurant" });
+        .json({ error: "Clés Cinetpay non configurée pour ce restaurant" });
     }
     const cinetpay = new Cinetpay(
       restaurant.cinetpayApiKey,
@@ -301,13 +301,13 @@ export async function payOrderCinetpay(req, res) {
       description: "Paiement de votre addition",
       notify_url: "https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672",
       // return_url: "https://webhook.site/2f4f8fb0-7e42-4520-b923-3e8a6b5bf672",
-      return_url : "http://127.0.0.1:3000/frontend/client-side/pages/paiement-page.html",
+      return_url:
+        "http://127.0.0.1:3000/frontend/client-side/pages/paiement-page.html",
       channels: "ALL",
     };
 
     //Appeler Cinetpay
     const response = await cinetpay.initiatePayment(paymentData);
-
 
     if (response.code === "201") {
       //201 = succès
@@ -331,6 +331,77 @@ export async function payOrderCinetpay(req, res) {
   } catch (err) {
     console.error("Error in payOrder:", err);
     return res.status(500).json({ error: "Erreur réseau" });
+  }
+}
+
+export async function checkOrderStatusCinetpay(req, res) {
+  try {
+    //Récupérer le restaurant
+    const restaurant = req.restaurant;
+
+    if (!restaurant.cinetpayApiKey || !restaurant.cinetpaySiteID) {
+      return res
+        .status(404)
+        .json({ error: "Clés Cinetpay non configurées pour ce restaurant" });
+    }
+
+    const cinetpay = new Cinetpay(
+      restaurant.cinetpayApiKey,
+      restaurant.cinetpaySiteID
+    );
+
+    //Récupérer la commande
+    const order = await orderModel.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: "Commande introuvable" });
+    }
+    // 1) Appel à checkTransaction pour obtenir le statut
+
+    const result = await cinetpay.checkTransaction(order.qrCodeId);
+
+    // Si result n'a pas le format attendu
+    if (!result || !result.data) {
+      console.error("Réponse inattendue de cinetpay:", result);
+      return res
+        .status(500)
+        .json({ error: "Réponse inattendue de CinetPay", raw: result });
+    }
+
+    if (result.data.status === "ACCEPTED") {
+      order.status = "paid";
+      await order.save();
+      return res.status(200).json({
+        orderId: order._id,
+        orderStatus: order.status,
+        cinetpayStatus: result.data.status,
+        payment_method: result.data.payment_method,
+        payment_date: result.data.payment_date,
+        description: result.data.description,
+      });
+    } else if (result.data.status === "PENDING") {
+      return res.status(200).json({
+        orderId: order._id,
+        orderStatus: order.status,
+        cinetpayStatus: result.data.status,
+        payment_method: result.data.payment_method,
+        payment_date: result.data.payment_date,
+        description: result.data.description,
+      });
+    } else {
+      order.status = "failed";
+      await order.save();
+      return res.status(202).json({
+        orderId: order._id,
+        orderStatus: order.status,
+        cinetpayStatus: result.data.status,
+        payment_method: result.data.payment_method,
+        payment_date: result.data.payment_date,
+        description: result.data.description,
+      });
+    }
+  } catch (err) {
+    console.error("Error in checkOrderStatus:", err);
+    return res.status(500).json({ error: err.message || err });
   }
 }
 // export async function notifyPayment(req, res) {

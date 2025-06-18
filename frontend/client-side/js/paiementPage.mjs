@@ -44,36 +44,64 @@ async function displayOrder() {
 
 displayOrder();
 
-async function verifyPaymentLink() {
-  try {
-    const response = await fetch(
-      baseUrl + "/client/order/" + orderId + "/status",
-      {
-        method: "GET",
-        credentials: "include",
-      }
-    );
-    const data = await response.json();
-    console.log(data.status);
+// async function verifyPaymentLink() {
+//   try {
+//     const response = await fetch(
+//       baseUrl + "/client/order/" + orderId + "/status",
+//       {
+//         method: "GET",
+//         credentials: "include",
+//       }
+//     );
+//     const data = await response.json();
+//     console.log(data.status);
 
-    if (response.ok && (data.status === 404 || data.status === 422)) {
+//     if (response.ok && (data.status === 404 || data.status === 422)) {
+//       document.getElementById("alertMessage").textContent =
+//         "Vous êtes sur le bon lien. Mais le serveur n'a pas encore lancé votre paiement. Veuillez patienter"
+//       document.getElementById("alertMessage").style.display = "block";
+//       document.getElementById("payer-button").style.display = "none";
+//     } else {
+//      // Affiche le bouton si le paiement est prêt
+//       document.getElementById("alertMessage").style.display = "none";
+//       document.getElementById("payer-button").style.display = "block";
+//       payButton.addEventListener("click", () => {
+//         window.location.href = "https://www.google.com";
+//       });
+//     }
+
+//   } catch (err) {
+//     document.getElementById("alertMessage").style.display = "block";
+//     document.getElementById("payer-button").style.display = "none";
+//   }
+// }
+
+async function verifyPaymentLinkCinetpay() {
+  try {
+    const response = await fetch(baseUrl + "/client/order/" + orderId, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    const order = await response.json();
+
+    if (response.ok && !order.payment_url) {
       document.getElementById("alertMessage").textContent =
-        "Vous êtes sur le bon lien. Mais le serveur n'a pas encore lancé votre paiement. Veuillez patienter"
+        "Vous êtes sur le bon lien. Mais le serveur n'a pas encore lancé votre paiement. Veuillez patienter";
       document.getElementById("alertMessage").style.display = "block";
       document.getElementById("payer-button").style.display = "none";
     } else {
-     // Affiche le bouton si le paiement est prêt
+      // Affiche le bouton si le paiement est prêt
       document.getElementById("alertMessage").style.display = "none";
       document.getElementById("payer-button").style.display = "block";
       payButton.addEventListener("click", () => {
-        window.location.href = "https://www.google.com";
+        window.location.href = order.payment_url;
       });
     }
-
   } catch (err) {
     document.getElementById("alertMessage").style.display = "block";
     document.getElementById("payer-button").style.display = "none";
   }
 }
 
-verifyPaymentLink();
+verifyPaymentLinkCinetpay();
