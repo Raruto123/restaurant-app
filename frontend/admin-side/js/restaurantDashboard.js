@@ -84,6 +84,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             credentials: "include",
           }
         );
+        if (response.status === 404) {
+          divStatut.textContent = "Supprimée 🗑️";
+          divStatut.className = "row status-delete";
+          clearInterval(interval);
+          return//on arrête ici
+        }
         const data = await response.json();
         // Si statut payé, met à jour l'affichage et arrête l'intervalle
         if (data.orderStatus === "paid" || data.cinetpayStatus === "ACCEPTED") {
@@ -220,7 +226,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         divStatut.textContent = "Échec 🚫";
         divStatut.className = "row status-unpaid";
         btnPay.textContent = "Commande Terminée";
-                btnPay.disabled = true;
+        btnPay.disabled = true;
         btnModify.disabled = true;
         btnModify.textContent = "❌";
       } else {

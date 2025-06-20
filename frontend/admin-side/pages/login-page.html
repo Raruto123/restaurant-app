@@ -1,26 +1,87 @@
 <!DOCTYPE html>
-<html lang="fr-CI">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>page de connexion au tableau de bord du restaurant</title>
-    <link rel="stylesheet" href="/frontend/admin-side/css/login-page.css">
-</head>
-<body>
-    <form id="signInForm">
-        <h3>CONNEXION DE L'ADMIN</h3>
-        <div id="errorMessage"></div>
-        <label for="email">E-mail</label>
-        <input type="email" name="email" id="emailRestaurant" required autocomplete>
-        <label for="password">Mot de passe</label>
-        <input type="password" name="password" id="passwordRestaurant" required autocomplete>
-        <span>
-            <!-- quand l'oeil se ferme tu changes juste le type password en texte par exemple -->
-            <input type="button" value="👁️" id="togglePassword">
-        </span>
-        <button type="submit">Connexion</button>
-    </form>
+<html lang="fr-CI" data-theme="nitro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Connexion • Nitro Tableau de Bord</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@5"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- <link rel="stylesheet" href="/frontend/admin-side/css/login-page.css" /> -->
+    <link rel="stylesheet" href="/frontend/global.css" />
+    <link rel="shortcut icon" href="/frontend/assets/20250620_0127_Éclair sur Fond Transparent_remix_01jy5f3wcwf7zs47rjvcj8278a.png" type="image/x-icon">
+  </head>
+  <body class="min-h-screen flex items-center justify-center bg-neutral">
+    <div
+      class="w-full max-w-md p-6 bg-base-100 rounded-xl shadow-xl flex flex-col gap-6"
+    >
+      <!-- Logo (mets ici ton vrai logo SVG/PNG plus tard) -->
+      <div class="flex justify-center mb-2">
+        <img
+          src="/frontend/assets/20250619_0602_Logo Nitro Énergique_simple_compose_01jy3cdssbe5haeaxx96v524nx (2).png"
+          alt="Logo Nitro"
+          class="w-50 h-50 object-contain drop-shadow-md"
+        />
+      </div>
+      <h3 class="text-2xl font-bold text-center text-primary mb-2">
+        Connexion Admin
+      </h3>
+      <form id="signInForm" class="flex flex-col gap-4">
+        <div id="errorMessage" class="text-error text-sm text-center"></div>
+        <label class="form-control w-full">
+          <span class="label-text">E-mail</span>
+          <input
+            type="email"
+            name="email"
+            id="emailRestaurant"
+            required
+            autocomplete="username"
+            class="input input-bordered input-primary w-full"
+            placeholder="Votre e-mail"
+          />
+        </label>
+        <label class="form-control w-full">
+          <span class="label-text">Mot de passe</span>
+          <div class="relative">
+            <input
+              type="password"
+              name="password"
+              id="passwordRestaurant"
+              required
+              autocomplete="current-password"
+              class="input input-bordered input-primary w-full pr-12"
+              placeholder="Votre mot de passe"
+            />
+            <button
+              type="button"
+              id="togglePassword"
+              tabindex="-1"
+              class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs"
+              aria-label="Afficher/Masquer"
+            >
+              👁️
+            </button>
+          </div>
+        </label>
+        <button type="submit" class="btn btn-primary btn-wide mt-2 mx-auto">
+          Connexion
+        </button>
+      </form>
+    </div>
+    <!-- Modal DaisyUI pour la redirection -->
+    <div id="redirect-modal" class="modal" style="pointer-events: none">
+      <div class="modal-box text-center">
+        <h3 class="font-bold text-lg text-primary">Connexion réussie !</h3>
+        <p class="py-4">Vous allez être redirigé vers votre tableau de bord</p>
+        <div class="modal-action">
+          <button id="modal-close-btn" class="btn btn-primary">OK</button>
+        </div>
+      </div>
+    </div>
     <script src="/frontend/config.js"></script>
     <script src="/frontend/admin-side/js/restaurantLogin.js"></script>
-</body>
+  </body>
 </html>

@@ -41,6 +41,10 @@ tabBtns.forEach((btn) => {
   });
 });
 
+document.getElementById("back-dashboard").onclick = function () {
+  window.location.href = "/frontend/admin-side/pages/dashboard.html"; // mets le bon chemin vers ton dashboard
+};
+
 async function fetchOrdersStats(dateStart, dateEnd) {
   // Appel à l'API de tes commandes
   const response = await fetch(`${baseUrl}/restaurant/dashboard-orders`, {

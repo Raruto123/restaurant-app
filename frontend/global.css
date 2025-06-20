@@ -1,0 +1,20 @@
+:root:has(input.theme-controller[value=nitro]:checked),
+[data-theme="nitro"] {
+  color-scheme: light;
+  --color-primary: #FF6700;
+  --color-primary-content: #ffffff;
+  --color-secondary: #19334D;
+  --color-secondary-content: #ffffff;
+  --color-accent: #FFD166;
+  --color-accent-content: #22223B;
+  --color-neutral: #FAF7F2;
+  --color-neutral-content: #22223B;
+  --color-info: #3ABFF8;
+  --color-info-content: #ffffff;
+  --color-success: #27AE60;
+  --color-success-content: #ffffff;
+  --color-warning: #FFA800;
+  --color-warning-content: #22223B;
+  --color-error: #E63946;
+  --color-error-content: #ffffff;
+}

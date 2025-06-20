@@ -357,13 +357,37 @@ export async function checkOrderStatusCinetpay(req, res) {
     }
     // 1) Appel à checkTransaction pour obtenir le statut
 
-    const result = await cinetpay.checkTransaction(order.qrCodeId);
+    let result;
+    try {
+      result = await cinetpay.checkTransaction(order.qrCodeId);
+      // Protéger si result est du HTML (erreur Cinetpay)
+      if (typeof result === "string" && result.startsWith("<!DOCTYPE")) {
+        throw new Error("CinetPay a renvoyé du HTML au lieu de JSON");
+      }
+    } catch (err) {
+      console.error("Erreur réseau/parse CinetPay :", err);
+      return res
+        .status(502)
+        .json({
+          error: "CinetPay ne répond pas (HTML ou erreur réseau)",
+          raw: err.message,
+        });
+    }
 
-    // Si result n'a pas le format attendu
+    // Gère le "not found"
+    if (result && result.code === "404") {
+      return res.status(404).json({
+        orderId: order._id,
+        orderStatus: order.status,
+        cinetpayStatus: "NOT_FOUND",
+        description: result.description || "Transaction inconnue chez Cinetpay",
+      });
+    }
+
     if (!result || !result.data) {
       console.error("Réponse inattendue de cinetpay:", result);
       return res
-        .status(500)
+        .status(502)
         .json({ error: "Réponse inattendue de CinetPay", raw: result });
     }
 
@@ -400,7 +424,7 @@ export async function checkOrderStatusCinetpay(req, res) {
       });
     }
   } catch (err) {
-    console.error("Error in checkOrderStatus:", err);
+    console.error("Error in checkOrderStatusCinetpay:", err);
     return res.status(500).json({ error: err.message || err });
   }
 }
